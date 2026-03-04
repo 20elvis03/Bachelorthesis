@@ -1,0 +1,26 @@
+digraph G {
+node [shape=box];
+"base_link" [label="base_link"];
+"base_lidar" [label="base_lidar"];
+"small_base" [label="small_base"];
+"small_base_brush_left" [label="small_base_brush_left"];
+"small_base_brush_right" [label="small_base_brush_right"];
+"small_base_wheel_front" [label="small_base_wheel_front"];
+"base_wheel_left" [label="base_wheel_left"];
+"base_wheel_right" [label="base_wheel_right"];
+node [shape=ellipse, color=blue, fontcolor=blue];
+"base_link" -> "lidar_to_base" [label="xyz: -0.77 0 3.05 \nrpy: 0 -0 0"]
+"lidar_to_base" -> "base_lidar"
+"base_link" -> "small_base_to_base" [label="xyz: 0.15 0 1.3 \nrpy: 0 -0 0"]
+"small_base_to_base" -> "small_base"
+"small_base" -> "brush_left_to_small_base" [label="xyz: 1.05 0.55 -0.925 \nrpy: 0 -0 0"]
+"brush_left_to_small_base" -> "small_base_brush_left"
+"small_base" -> "brush_right_to_small_base" [label="xyz: 1.05 -0.55 -0.925 \nrpy: 0 -0 0"]
+"brush_right_to_small_base" -> "small_base_brush_right"
+"small_base" -> "wheel_front_to_small_base" [label="xyz: -0.12 0 -1.04 \nrpy: 0 -0 0"]
+"wheel_front_to_small_base" -> "small_base_wheel_front"
+"base_link" -> "wheel_left_to_base" [label="xyz: -1.59 0.65 0.26 \nrpy: 0 -0 0"]
+"wheel_left_to_base" -> "base_wheel_left"
+"base_link" -> "wheel_right_to_base" [label="xyz: -1.59 -0.65 0.26 \nrpy: 0 -0 0"]
+"wheel_right_to_base" -> "base_wheel_right"
+}
