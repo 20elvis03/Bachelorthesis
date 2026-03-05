@@ -1,3 +1,4 @@
 [ZoneTransfer]
 ZoneId=3
-ReferrerUrl=C:\Users\elvis\Downloads\files.zip
+ReferrerUrl=https://claude.ai/chat/6126b3eb-1c43-489d-a54c-e932c0228dc0
+HostUrl=https://claude.ai/api/organizations/2b396c0d-58ef-4b0e-a6ec-242711d364fe/conversations/6126b3eb-1c43-489d-a54c-e932c0228dc0/wiggle/download-file?path=%2Fmnt%2Fuser-data%2Foutputs%2Fmy_robot_description.urdf
