@@ -12,7 +12,7 @@ def generate_launch_description():
     pkg_gz    = get_package_share_directory('my_robot_gazebo')
 
     urdf_path  = os.path.join(pkg_desc, 'urdf', 'my_robot_description.urdf')
-    world_path = os.path.join(pkg_desc, 'worlds', 'airport_terminal.sdf') #zwischen world.sdf und airport terminal switchbar
+    world_path = os.path.join(pkg_desc, 'worlds', 'airport_terminal.sdf') #zwischen my_world.sdf und airport_terminal.sdf switchbar
     bridge_yaml = os.path.join(pkg_desc, 'config', 'bridge.yaml')
 
     with open(urdf_path, 'r') as f:
@@ -43,7 +43,7 @@ def generate_launch_description():
         package='ros_gz_sim',
         executable='create',
         arguments=['-name', 'my_robot', '-topic', '/robot_description',
-                   '-x', '0.0', '-y', '0.0', '-z', '0.5'],
+                   '-x', '0.0', '-y', '0.0', '-z', '0.05'],
         output='screen'
     )
 
@@ -62,6 +62,6 @@ def generate_launch_description():
     return LaunchDescription([
         gz_sim,
         rsp,
-        TimerAction(period=3.0, actions=[spawn]),
-        TimerAction(period=3.0, actions=[bridge]),
+        TimerAction(period=5.0, actions=[spawn]),
+        TimerAction(period=5.0, actions=[bridge]),
     ])
