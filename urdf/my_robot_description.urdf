@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <robot name="my_robot">
+<link name="base_footprint"/>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
   <!--  MATERIALS                                                   -->
@@ -61,7 +62,7 @@
     </visual>
     <collision>
       <geometry>
-        <sphere radius="0.048"/>
+        <cylinder radius="0.104" length="0.05"/>  <!-- cylinder statt sphere! -->
       </geometry>
       <origin xyz="0 0 0" rpy="1.5708 0 0"/>
     </collision>
@@ -88,7 +89,7 @@
     </visual>
     <collision>
       <geometry>
-        <sphere radius="0.048"/>
+        <cylinder radius="0.104" length="0.05"/>  <!-- cylinder statt sphere! -->
       </geometry>
       <origin xyz="0 0 0" rpy="1.5708 0 0"/>
     </collision>
@@ -359,6 +360,11 @@
   <!-- ═══════════════════════════════════════════════════════════ -->
   <!--  JOINTS				                           -->
   <!-- ═══════════════════════════════════════════════════════════ -->
+  <joint name="base_footprint_to_base" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
 
   <joint name="wheel_left_to_base" type="continuous">
     <parent link="base_link"/>
@@ -377,7 +383,7 @@
   <joint name="small_base_to_base" type="revolute">
     <parent link="base_link"/>
     <child link="small_base"/>
-    <origin xyz="0.06 0.0 0.52" rpy="0 0 0"/>
+    <origin xyz="0.06 0 0.52" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
     <limit lower="-0.5" upper="0.5" effort="10.0" velocity="1.0"/>
   </joint>
@@ -385,7 +391,7 @@
   <joint name="wheel_front_to_small_base" type="continuous">
     <parent link="small_base"/>
     <child link="small_base_wheel_front"/>
-    <origin xyz="-0.048 0.0 -0.416" rpy="0 0 0"/>
+    <origin xyz="-0.048 0 -0.416" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
   </joint>
 
@@ -412,45 +418,45 @@
   <joint name="camera_front_to_base" type="fixed">
     <parent link="base_link"/>
     <child link="camera_front"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0.346 0.01 0.65" rpy="0 0 0"/>
   </joint>
 
   <joint name="camera_front_floor_to_base" type="fixed">
     <parent link="base_link"/>
     <child link="camera_front_floor"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0.35 0.01 0.476" rpy="0 0 0"/>
   </joint>
 
   <joint name="camera_left_to_base" type="fixed">
     <parent link="base_link"/>
     <child link="camera_left"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="-0.33 0.318 0.56" rpy="0 0 -1.5708"/>
   </joint>
 
   <joint name="camera_right_to_base" type="fixed">
     <parent link="base_link"/>
     <child link="camera_right"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="-0.33 -0.293 0.56" rpy="0 0 0"/>
   </joint>
 
   <joint name="camera_back_to_base" type="fixed">
     <parent link="base_link"/>
     <child link="camera_back"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="-0.765 0.01 0.56" rpy="0 0 0"/>
   </joint>
 
   <joint name="camera_back_floor_to_base" type="fixed">
     <parent link="base_link"/>
     <child link="camera_back_floor"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="-0.77 0.01 0.4615" rpy="0 0.087 0"/>
   </joint>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
   <!--  GAZEBO PLUGINS                                             -->
   <!-- ═══════════════════════════════════════════════════════════ -->
-
   <gazebo>
-    <plugin filename="gz-sim-diff-drive-system"
+      <!-- gz-sim-diff-drive-system -->
+      <plugin filename="libgz-sim9-diff-drive-system.so"
             name="gz::sim::systems::DiffDrive">
       <left_joint>wheel_left_to_base</left_joint>
       <right_joint>wheel_right_to_base</right_joint>
@@ -461,16 +467,25 @@
       <odom_topic>/odom</odom_topic>
       <tf_topic>/tf</tf_topic>
       <frame_id>odom</frame_id>
-      <child_frame_id>base_link</child_frame_id>
+      <child_frame_id>base_footprint</child_frame_id>
     </plugin>
   </gazebo>
 
-  <!-- ═══════════════════════════════════════════════════════════ -->
-  <!--  JOINT STATE PUBLISHER GAZEBO                               -->
-  <!-- ═══════════════════════════════════════════════════════════ -->
   <gazebo>
-    <plugin filename="gz-sim-joint-state-publisher-system"
-            name="gz::sim::systems::JointStatePublisher">
+    <plugin filename="libgz-sim9-joint-position-controller-system.so"
+        name="gz::sim::systems::JointPositionController">
+      <joint_name>small_base_to_base</joint_name>
+      <topic>/steering</topic>
+      <p_gain>10.0</p_gain>
+      <i_gain>0.0</i_gain>
+      <d_gain>0.5</d_gain>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <!-- gz-sim-joint-state-publisher-system -->
+    <plugin filename="libgz-sim9-joint-state-publisher-system.so"
+        name="gz::sim::systems::JointStatePublisher">
       <topic>/joint_states</topic>
     </plugin>
   </gazebo>
@@ -520,7 +535,7 @@
           <width>640</width>
           <height>480</height>
         </image>
-        <clip><near>0.1</near><far>10.0</far></clip>
+        <clip><near>0.3</near><far>60.0</far></clip>
       </camera>
       <always_on>true</always_on>
       <visualize>true</visualize>
@@ -540,7 +555,7 @@
           <width>640</width>
           <height>480</height>
         </image>
-        <clip><near>0.05</near><far>2.0</far></clip>
+        <clip><near>0.3</near><far>60.0</far></clip>
       </camera>
       <always_on>true</always_on>
       <visualize>true</visualize>
@@ -560,7 +575,7 @@
           <width>640</width>
           <height>480</height>
         </image>
-        <clip><near>0.1</near><far>10.0</far></clip>
+        <clip><near>0.5</near><far>60.0</far></clip>
       </camera>
       <always_on>true</always_on>
       <visualize>true</visualize>
@@ -581,7 +596,7 @@
           <width>640</width>
           <height>480</height>
         </image>
-        <clip><near>0.1</near><far>10.0</far></clip>
+        <clip><near>0.3</near><far>60.0</far></clip>
       </camera>
       <always_on>true</always_on>
       <visualize>true</visualize>
@@ -601,7 +616,7 @@
           <width>640</width>
           <height>480</height>
         </image>
-        <clip><near>0.1</near><far>10.0</far></clip>
+        <clip><near>0.3</near><far>60.0</far></clip>
       </camera>
       <always_on>true</always_on>
       <visualize>true</visualize>
@@ -622,7 +637,7 @@
           <width>640</width>
           <height>480</height>
         </image>
-        <clip><near>0.05</near><far>5.0</far></clip>
+        <clip><near>0.3</near><far>60.0</far></clip>
       </camera>
       <always_on>true</always_on>
       <visualize>true</visualize>
@@ -637,18 +652,24 @@
   </gazebo>
   <gazebo reference="base_wheel_left">
     <material>Gazebo/DarkGray</material>
-    <mu1>1.0</mu1>
-    <mu2>1.0</mu2>
+    <mu1>10.0</mu1>
+    <mu2>10.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>1.0</kd>
   </gazebo>
   <gazebo reference="base_wheel_right">
     <material>Gazebo/DarkGray</material>
-    <mu1>1.0</mu1>
-    <mu2>1.0</mu2>
+    <mu1>10.0</mu1>
+    <mu2>10.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>1.0</kd>
   </gazebo>
   <gazebo reference="small_base_wheel_front">
     <material>Gazebo/DarkGray</material>
-    <mu1>0.1</mu1>
-    <mu2>0.1</mu2>
+    <mu1>10.0</mu1>
+    <mu2>10.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>1.0</kd>
   </gazebo>
   <gazebo reference="small_base">
     <material>Gazebo/Gray</material>
