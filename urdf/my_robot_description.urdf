@@ -3,7 +3,7 @@
 <link name="base_footprint"/>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
-  <!--  MATERIALS                                                   -->
+  <!--  MATERIALS                                                  -->
   <!-- ═══════════════════════════════════════════════════════════ -->
   <material name="gray">
     <color rgba="0.5 0.5 0.5 1.0"/>
@@ -22,7 +22,7 @@
   </material>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
-  <!--  BASE LINK                                                   -->
+  <!--  BASE LINK                                                  -->
   <!-- ═══════════════════════════════════════════════════════════ -->
   <link name="base_link">
     <visual>
@@ -49,7 +49,7 @@
   </link>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
-  <!--  LEFT WHEEL                                                  -->
+  <!--  LEFT WHEEL                                                 -->
   <!-- ═══════════════════════════════════════════════════════════ -->
   <link name="base_wheel_left">
     <visual>
@@ -62,7 +62,7 @@
     </visual>
     <collision>
       <geometry>
-        <cylinder radius="0.104" length="0.05"/>  <!-- cylinder statt sphere! -->
+        <cylinder radius="0.104" length="0.05"/>
       </geometry>
       <origin xyz="0 0 0" rpy="1.5708 0 0"/>
     </collision>
@@ -76,7 +76,7 @@
   </link>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
-  <!--  RIGHT WHEEL                                                 -->
+  <!--  RIGHT WHEEL                                                -->
   <!-- ═══════════════════════════════════════════════════════════ -->
   <link name="base_wheel_right">
     <visual>
@@ -89,7 +89,7 @@
     </visual>
     <collision>
       <geometry>
-        <cylinder radius="0.104" length="0.05"/>  <!-- cylinder statt sphere! -->
+        <cylinder radius="0.104" length="0.05"/>
       </geometry>
       <origin xyz="0 0 0" rpy="1.5708 0 0"/>
     </collision>
@@ -430,32 +430,31 @@
   <joint name="camera_left_to_base" type="fixed">
     <parent link="base_link"/>
     <child link="camera_left"/>
-    <origin xyz="-0.33 0.318 0.56" rpy="0 0 -1.5708"/>
+    <origin xyz="-0.374 0.294 0.56" rpy="0 0 1.5708"/>
   </joint>
 
   <joint name="camera_right_to_base" type="fixed">
     <parent link="base_link"/>
     <child link="camera_right"/>
-    <origin xyz="-0.33 -0.293 0.56" rpy="0 0 0"/>
+    <origin xyz="-0.33 -0.32 0.56" rpy="0 0 -1.5708"/>
   </joint>
 
   <joint name="camera_back_to_base" type="fixed">
     <parent link="base_link"/>
     <child link="camera_back"/>
-    <origin xyz="-0.765 0.01 0.56" rpy="0 0 0"/>
+    <origin xyz="-0.765 -0.025 0.56" rpy="0 0 3.1416"/>
   </joint>
 
   <joint name="camera_back_floor_to_base" type="fixed">
     <parent link="base_link"/>
     <child link="camera_back_floor"/>
-    <origin xyz="-0.77 0.01 0.4615" rpy="0 0.087 0"/>
+    <origin xyz="-0.77 -0.025 0.4615" rpy="0 0 3.1416"/>
   </joint>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
   <!--  GAZEBO PLUGINS                                             -->
   <!-- ═══════════════════════════════════════════════════════════ -->
   <gazebo>
-      <!-- gz-sim-diff-drive-system -->
       <plugin filename="libgz-sim9-diff-drive-system.so"
             name="gz::sim::systems::DiffDrive">
       <left_joint>wheel_left_to_base</left_joint>
@@ -483,7 +482,6 @@
   </gazebo>
 
   <gazebo>
-    <!-- gz-sim-joint-state-publisher-system -->
     <plugin filename="libgz-sim9-joint-state-publisher-system.so"
         name="gz::sim::systems::JointStatePublisher">
       <topic>/joint_states</topic>
@@ -575,7 +573,7 @@
           <width>640</width>
           <height>480</height>
         </image>
-        <clip><near>0.5</near><far>60.0</far></clip>
+        <clip><near>0.3</near><far>60.0</far></clip>
       </camera>
       <always_on>true</always_on>
       <visualize>true</visualize>
