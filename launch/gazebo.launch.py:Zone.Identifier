@@ -1,0 +1,4 @@
+[ZoneTransfer]
+ZoneId=3
+ReferrerUrl=https://claude.ai/chat/9a13f7e5-f852-4172-ad80-c99f8085adf7
+HostUrl=https://claude.ai/api/organizations/2b396c0d-58ef-4b0e-a6ec-242711d364fe/conversations/9a13f7e5-f852-4172-ad80-c99f8085adf7/wiggle/download-file?path=%2Fmnt%2Fuser-data%2Foutputs%2Fgazebo.launch.py
