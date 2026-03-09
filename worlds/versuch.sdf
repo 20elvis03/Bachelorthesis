@@ -1,0 +1,289 @@
+<?xml version="1.0" ?>
+<!--
+  my_world.sdf – Eigene Welt für my_robot in Gazebo Ionic
+  Enthält: Boden, Beleuchtung, Wände, Hindernisse, Bereiche
+-->
+<sdf version="1.10">
+  <world name="my_world">
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  SYSTEM PLUGINS (Pflicht für Gazebo Ionic)              -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <plugin filename="gz-sim-physics-system"
+            name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-sensors-system"
+            name="gz::sim::systems::Sensors">
+      <render_engine>ogre</render_engine>
+    </plugin>
+    <plugin filename="gz-sim-scene-broadcaster-system"
+            name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-user-commands-system"
+            name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-contact-system"
+            name="gz::sim::systems::Contact"/>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  PHYSIK                                                  -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <physics name="default_physics" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  BELEUCHTUNG                                             -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <light name="sun" type="directional">
+      <pose>0 0 20 0 0.5 0</pose>
+      <cast_shadows>true</cast_shadows>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.3 0.3 0.3 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.5 -1</direction>
+    </light>
+
+    <!-- Ambient Licht -->
+    <ambient>0.4 0.4 0.4 1</ambient>
+    <background>0.7 0.8 1.0 1</background>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  BODEN (20x20m Fläche)                                  -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>40 40</size>
+            </plane>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.0</mu>
+                <mu2>1.0</mu2>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>40 40</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.6 0.6 0.6 1</ambient>
+            <diffuse>0.6 0.6 0.6 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  AUSSENWÄNDE (schließen die Arena ein)                    -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+
+    <!-- Wand Nord -->
+    <model name="wall_north">
+      <static>true</static>
+      <pose>0 18 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>40 0.2 1.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>40 0.2 1.0</size></box></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Wand Süd -->
+    <model name="wall_south">
+      <static>true</static>
+      <pose>0 -18 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>40 0.2 1.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>40 0.2 1.0</size></box></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Wand Ost -->
+    <model name="wall_east">
+      <static>true</static>
+      <pose>18 0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.2 40 1.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.2 40 1.0</size></box></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Wand West -->
+    <model name="wall_west">
+      <static>true</static>
+      <pose>-18 0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.2 40 1.0</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.2 40 1.0</size></box></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  HINDERNISSE – Box-Objekte                              -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+
+    <model name="box_1">
+      <static>true</static>
+      <pose>4 4 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1.0 1.0 1.0</size></box></geometry></collision>
+        <visual name="visual">
+          <geometry><box><size>1.0 1.0 1.0</size></box></geometry>
+          <material><ambient>0.8 0.2 0.2 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="box_2">
+      <static>true</static>
+      <pose>-4 4 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1.0 1.0 1.0</size></box></geometry></collision>
+        <visual name="visual">
+          <geometry><box><size>1.0 1.0 1.0</size></box></geometry>
+          <material><ambient>0.2 0.2 0.8 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="box_3">
+      <static>true</static>
+      <pose>4 -4 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1.0 1.0 1.0</size></box></geometry></collision>
+        <visual name="visual">
+          <geometry><box><size>1.0 1.0 1.0</size></box></geometry>
+          <material><ambient>0.2 0.8 0.2 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="box_4">
+      <static>true</static>
+      <pose>-4 -4 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1.0 1.0 1.0</size></box></geometry></collision>
+        <visual name="visual">
+          <geometry><box><size>1.0 1.0 1.0</size></box></geometry>
+          <material><ambient>0.8 0.8 0.2 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  HINDERNISSE – Zylinder-Objekte (Säulen)                -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+
+    <model name="pillar_1">
+      <static>true</static>
+      <pose>8 0 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><cylinder><radius>0.3</radius><length>1.5</length></cylinder></geometry></collision>
+        <visual name="visual">
+          <geometry><cylinder><radius>0.3</radius><length>1.5</length></cylinder></geometry>
+          <material><ambient>0.5 0.3 0.1 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="pillar_2">
+      <static>true</static>
+      <pose>-8 0 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><cylinder><radius>0.3</radius><length>1.5</length></cylinder></geometry></collision>
+        <visual name="visual">
+          <geometry><cylinder><radius>0.3</radius><length>1.5</length></cylinder></geometry>
+          <material><ambient>0.5 0.3 0.1 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="pillar_3">
+      <static>true</static>
+      <pose>0 8 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><cylinder><radius>0.3</radius><length>1.5</length></cylinder></geometry></collision>
+        <visual name="visual">
+          <geometry><cylinder><radius>0.3</radius><length>1.5</length></cylinder></geometry>
+          <material><ambient>0.5 0.3 0.1 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  INNENWAND / Korridor für Navigation-Tests              -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+
+    <model name="inner_wall_1">
+      <static>true</static>
+      <pose>10 5 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>8.0 0.2 1.0</size></box></geometry></collision>
+        <visual name="visual">
+          <geometry><box><size>8.0 0.2 1.0</size></box></geometry>
+          <material><ambient>0.7 0.7 0.5 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="inner_wall_2">
+      <static>true</static>
+      <pose>-10 -5 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>8.0 0.2 1.0</size></box></geometry></collision>
+        <visual name="visual">
+          <geometry><box><size>8.0 0.2 1.0</size></box></geometry>
+          <material><ambient>0.7 0.7 0.5 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="inner_wall_3">
+      <static>true</static>
+      <pose>0 -10 0.5 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>10.0 0.2 1.0</size></box></geometry></collision>
+        <visual name="visual">
+          <geometry><box><size>10.0 0.2 1.0</size></box></geometry>
+          <material><ambient>0.7 0.7 0.5 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>
