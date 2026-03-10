@@ -516,7 +516,7 @@
         </noise>
       </lidar>
       <always_on>true</always_on>
-      <visualize>true</visualize>
+      <visualize>false</visualize>
     </sensor>
   </gazebo>
 
@@ -536,7 +536,7 @@
         <clip><near>0.3</near><far>60.0</far></clip>
       </camera>
       <always_on>true</always_on>
-      <visualize>true</visualize>
+      <visualize>false</visualize>
     </sensor>
   </gazebo>
 
@@ -556,7 +556,7 @@
         <clip><near>0.3</near><far>60.0</far></clip>
       </camera>
       <always_on>true</always_on>
-      <visualize>true</visualize>
+      <visualize>false</visualize>
     </sensor>
   </gazebo>
 
@@ -576,7 +576,7 @@
         <clip><near>0.3</near><far>60.0</far></clip>
       </camera>
       <always_on>true</always_on>
-      <visualize>true</visualize>
+      <visualize>false</visualize>
     </sensor>
   </gazebo>
 
@@ -597,7 +597,7 @@
         <clip><near>0.3</near><far>60.0</far></clip>
       </camera>
       <always_on>true</always_on>
-      <visualize>true</visualize>
+      <visualize>false</visualize>
     </sensor>
   </gazebo>
 
@@ -617,7 +617,7 @@
         <clip><near>0.3</near><far>60.0</far></clip>
       </camera>
       <always_on>true</always_on>
-      <visualize>true</visualize>
+      <visualize>false</visualize>
     </sensor>
   </gazebo>
 
@@ -638,7 +638,7 @@
         <clip><near>0.3</near><far>60.0</far></clip>
       </camera>
       <always_on>true</always_on>
-      <visualize>true</visualize>
+      <visualize>false</visualize>
     </sensor>
   </gazebo>
 

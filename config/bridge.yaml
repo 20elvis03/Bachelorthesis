@@ -11,6 +11,14 @@
   gz_type_name: "gz.msgs.Clock"
   direction: GZ_TO_ROS
 
+# ── STEUERUNG ──────────────────────────────────────────────────
+
+- ros_topic_name: "/steering"
+  gz_topic_name: "/steering"
+  ros_type_name: "std_msgs/msg/Float64"
+  gz_type_name: "gz.msgs.Double"
+  direction: ROS_TO_GZ
+
 # ── ANTRIEB & ODOMETRIE ────────────────────────────────────────
 
 - ros_topic_name: "/cmd_vel"
@@ -57,7 +65,6 @@
 
 # ── KAMERAS ────────────────────────────────────────────────────
 
-# Vorne vorwärts
 - ros_topic_name: "/camera/front/image"
   gz_topic_name: "/camera/front/image"
   ros_type_name: "sensor_msgs/msg/Image"
@@ -74,7 +81,6 @@
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
 
-# Vorne Boden
 - ros_topic_name: "/camera/front/floor/image"
   gz_topic_name: "/camera/front/floor/image"
   ros_type_name: "sensor_msgs/msg/Image"
@@ -91,7 +97,6 @@
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
 
-# Links
 - ros_topic_name: "/camera/left/image"
   gz_topic_name: "/camera/left/image"
   ros_type_name: "sensor_msgs/msg/Image"
@@ -108,7 +113,6 @@
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
 
-# Rechts
 - ros_topic_name: "/camera/right/image"
   gz_topic_name: "/camera/right/image"
   ros_type_name: "sensor_msgs/msg/Image"
@@ -125,7 +129,6 @@
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
 
-# Hinten rückwärts
 - ros_topic_name: "/camera/back/image"
   gz_topic_name: "/camera/back/image"
   ros_type_name: "sensor_msgs/msg/Image"
@@ -142,7 +145,6 @@
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
 
-# Hinten Boden
 - ros_topic_name: "/camera/back/floor/image"
   gz_topic_name: "/camera/back/floor/image"
   ros_type_name: "sensor_msgs/msg/Image"
@@ -158,6 +160,7 @@
   ros_type_name: "sensor_msgs/msg/CameraInfo"
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
+
 # ── ÜBERWACHUNGSKAMERAS (Welt-fest) ────────────────────────────
 
 - ros_topic_name: "/surveillance/nw"
@@ -165,11 +168,21 @@
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
   direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/nw/camera_info"
+  gz_topic_name: "/surveillance/nw/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
 
 - ros_topic_name: "/surveillance/ne"
   gz_topic_name: "/surveillance/ne"
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/ne/camera_info"
+  gz_topic_name: "/surveillance/ne/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
 
 - ros_topic_name: "/surveillance/sw"
@@ -177,11 +190,21 @@
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
   direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/sw/camera_info"
+  gz_topic_name: "/surveillance/sw/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
 
 - ros_topic_name: "/surveillance/se"
   gz_topic_name: "/surveillance/se"
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/se/camera_info"
+  gz_topic_name: "/surveillance/se/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
 
 - ros_topic_name: "/surveillance/center/down"
@@ -189,11 +212,21 @@
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
   direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/center/down/camera_info"
+  gz_topic_name: "/surveillance/center/down/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
 
 - ros_topic_name: "/surveillance/center/north"
   gz_topic_name: "/surveillance/center/north"
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/center/north/camera_info"
+  gz_topic_name: "/surveillance/center/north/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
 
 - ros_topic_name: "/surveillance/center/south"
@@ -201,15 +234,42 @@
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
   direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/center/south/camera_info"
+  gz_topic_name: "/surveillance/center/south/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
 
 - ros_topic_name: "/surveillance/center/east"
   gz_topic_name: "/surveillance/center/east"
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
   direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/center/east/camera_info"
+  gz_topic_name: "/surveillance/center/east/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
 
 - ros_topic_name: "/surveillance/center/west"
   gz_topic_name: "/surveillance/center/west"
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/center/west/camera_info"
+  gz_topic_name: "/surveillance/center/west/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/surveillance/garage"
+  gz_topic_name: "/surveillance/garage"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/surveillance/garage/camera_info"
+  gz_topic_name: "/surveillance/garage/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
