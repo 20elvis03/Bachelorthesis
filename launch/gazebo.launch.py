@@ -1,6 +1,6 @@
 import os
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, TimerAction, ExecuteProcess
+from launch.actions import IncludeLaunchDescription, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
@@ -9,7 +9,6 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     pkg_desc   = get_package_share_directory('my_robot_description')
-
     urdf_path   = os.path.join(pkg_desc, 'urdf', 'my_robot_description.urdf')
     world_path  = os.path.join(pkg_desc, 'worlds', 'my_world.sdf')
     bridge_yaml = os.path.join(pkg_desc, 'config', 'bridge.yaml')
@@ -41,9 +40,9 @@ def generate_launch_description():
         arguments=[
             '-name', 'my_robot',
             '-topic', '/robot_description',
-            '-x', '22.5', '-y', '-22.5', '-z', '0.3',
+            '-x', '22.5', '-y', '-22.5', '-z', '0.25', '-Y', '1.5708',
         ],
-	parameters=[{'use_sim_time': True}],
+        parameters=[{'use_sim_time': True}],
         output='screen'
     )
 
@@ -61,6 +60,6 @@ def generate_launch_description():
     return LaunchDescription([
         gz_sim,
         rsp,
-        TimerAction(period=15.0, actions=[spawn]),
-        TimerAction(period=3.0, actions=[bridge]),
+        TimerAction(period=20.0,  actions=[spawn]),
+        TimerAction(period=22.0, actions=[bridge]),
     ])
