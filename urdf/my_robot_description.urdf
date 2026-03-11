@@ -41,7 +41,7 @@
     </collision>
     <inertial>
       <mass value="10.0"/>
-      <origin xyz="0 0 0.1" rpy="0 0 0"/>
+      <origin xyz="-0.3 0 0.1" rpy="0 0 0"/>
       <inertia ixx="0.056" ixy="0.0" ixz="0.0"
                iyy="0.167" iyz="0.0"
                izz="0.200"/>
@@ -121,8 +121,8 @@
       <origin xyz="0 0 0" rpy="0 0 0"/>
     </collision>
     <inertial>
-      <mass value="3.0"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.5"/>
+      <origin xyz="-0.2 0 0" rpy="0 0 0"/>
       <inertia ixx="0.030" ixy="0.0" ixz="0.0"
                iyy="0.040" iyz="0.0"
                izz="0.065"/>
@@ -143,16 +143,16 @@
     </visual>
     <collision>
       <geometry>
-        <sphere radius="0.048"/>
+        <cylinder radius="0.104" length="0.05"/>
       </geometry>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
     </collision>
     <inertial>
       <mass value="0.3"/>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <inertia ixx="0.0003" ixy="0.0" ixz="0.0"
-               iyy="0.0003" iyz="0.0"
-               izz="0.0003"/>
+      <inertia ixx="0.003" ixy="0.0" ixz="0.0"
+               iyy="0.003" iyz="0.0"
+               izz="0.005"/>
     </inertial>
   </link>
 
@@ -363,20 +363,20 @@
   <joint name="base_footprint_to_base" type="fixed">
     <parent link="base_footprint"/>
     <child link="base_link"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0 0 0.104" rpy="0 0 0"/>
   </joint>
 
   <joint name="wheel_left_to_base" type="continuous">
     <parent link="base_link"/>
     <child link="base_wheel_left"/>
-    <origin xyz="-0.636 0.26 0.104" rpy="0 0 0"/>
+    <origin xyz="-0.636 0.241 0.104" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
   </joint>
 
   <joint name="wheel_right_to_base" type="continuous">
     <parent link="base_link"/>
     <child link="base_wheel_right"/>
-    <origin xyz="-0.636 -0.26 0.104" rpy="0 0 0"/>
+    <origin xyz="-0.636 -0.267 0.104" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
   </joint>
 
@@ -455,11 +455,11 @@
   <!--  GAZEBO PLUGINS                                             -->
   <!-- ═══════════════════════════════════════════════════════════ -->
   <gazebo>
-      <plugin filename="libgz-sim9-diff-drive-system.so"
+    <plugin filename="libgz-sim9-diff-drive-system.so"
             name="gz::sim::systems::DiffDrive">
       <left_joint>wheel_left_to_base</left_joint>
       <right_joint>wheel_right_to_base</right_joint>
-      <wheel_separation>0.52</wheel_separation>
+      <wheel_separation>0.508</wheel_separation>
       <wheel_radius>0.104</wheel_radius>
       <odom_publish_frequency>50</odom_publish_frequency>
       <topic>/cmd_vel</topic>
@@ -493,20 +493,28 @@
   <!-- ═══════════════════════════════════════════════════════════ -->
   <gazebo reference="lidar">
     <sensor name="lidar" type="gpu_lidar">
+      <pose>0 0 0.78 0 0 0</pose>
       <topic>/scan</topic>
+      <frame_id>lidar</frame_id>
       <update_rate>10</update_rate>
       <lidar>
         <scan>
           <horizontal>
-            <samples>360</samples>
+            <samples>1200</samples>
             <resolution>1</resolution>
             <min_angle>-3.14159</min_angle>
             <max_angle>3.14159</max_angle>
           </horizontal>
+          <vertical>
+            <samples>64</samples>
+            <resolution>1</resolution>
+            <min_angle>-1.0</min_angle>
+            <max_angle>0.15</max_angle>
+          </vertical>
         </scan>
         <range>
           <min>0.15</min>
-          <max>12.0</max>
+          <max>5.0</max>
           <resolution>0.01</resolution>
         </range>
         <noise>
@@ -515,6 +523,23 @@
           <stddev>0.01</stddev>
         </noise>
       </lidar>
+      <ignoreEntities>
+        <entity>my_robot::base_link</entity>
+        <entity>my_robot::base_footprint</entity>
+        <entity>my_robot::base_wheel_left</entity>
+        <entity>my_robot::base_wheel_right</entity>
+        <entity>my_robot::small_base</entity>
+        <entity>my_robot::small_base_wheel_front</entity>
+        <entity>my_robot::small_base_brush_left</entity>
+        <entity>my_robot::small_base_brush_right</entity>
+        <entity>my_robot::lidar</entity>
+        <entity>my_robot::camera_front</entity>
+        <entity>my_robot::camera_front_floor</entity>
+        <entity>my_robot::camera_left</entity>
+        <entity>my_robot::camera_right</entity>
+        <entity>my_robot::camera_back</entity>
+        <entity>my_robot::camera_back_floor</entity>
+      </ignoreEntities>
       <always_on>true</always_on>
       <visualize>false</visualize>
     </sensor>
@@ -643,37 +668,28 @@
   </gazebo>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
-  <!--  GAZEBO COLOR                                               -->
+  <!--  GAZEBO REFERENCES                                          -->
   <!-- ═══════════════════════════════════════════════════════════ -->
   <gazebo reference="base_link">
     <material>Gazebo/Gray</material>
   </gazebo>
+
   <gazebo reference="base_wheel_left">
     <material>Gazebo/DarkGray</material>
-    <mu1>10.0</mu1>
-    <mu2>10.0</mu2>
-    <kp>1000000.0</kp>
-    <kd>1.0</kd>
+    <mu1>1.5</mu1>
+    <mu2>1.5</mu2>
   </gazebo>
+
   <gazebo reference="base_wheel_right">
     <material>Gazebo/DarkGray</material>
-    <mu1>10.0</mu1>
-    <mu2>10.0</mu2>
-    <kp>1000000.0</kp>
-    <kd>1.0</kd>
+    <mu1>1.5</mu1>
+    <mu2>1.5</mu2>
   </gazebo>
+
   <gazebo reference="small_base_wheel_front">
     <material>Gazebo/DarkGray</material>
-    <mu1>10.0</mu1>
-    <mu2>10.0</mu2>
-    <kp>1000000.0</kp>
-    <kd>1.0</kd>
-  </gazebo>
-  <gazebo reference="small_base">
-    <material>Gazebo/Gray</material>
-  </gazebo>
-  <gazebo reference="lidar">
-    <material>Gazebo/Yellow</material>
+    <mu1>1.5</mu1>
+    <mu2>1.5</mu2>
   </gazebo>
 
 </robot>

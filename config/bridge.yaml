@@ -11,14 +11,6 @@
   gz_type_name: "gz.msgs.Clock"
   direction: GZ_TO_ROS
 
-# ── STEUERUNG ──────────────────────────────────────────────────
-
-- ros_topic_name: "/steering"
-  gz_topic_name: "/steering"
-  ros_type_name: "std_msgs/msg/Float64"
-  gz_type_name: "gz.msgs.Double"
-  direction: ROS_TO_GZ
-
 # ── ANTRIEB & ODOMETRIE ────────────────────────────────────────
 
 - ros_topic_name: "/cmd_vel"
@@ -32,6 +24,14 @@
   ros_type_name: "nav_msgs/msg/Odometry"
   gz_type_name: "gz.msgs.Odometry"
   direction: GZ_TO_ROS
+
+# ── STEUERUNG ──────────────────────────────────────────────────
+
+- ros_topic_name: "/steering"
+  gz_topic_name: "/steering"
+  ros_type_name: "std_msgs/msg/Float64"
+  gz_type_name: "gz.msgs.Double"
+  direction: ROS_TO_GZ
 
 # ── TF & JOINTS ────────────────────────────────────────────────
 
@@ -53,6 +53,12 @@
   gz_topic_name: "/scan"
   ros_type_name: "sensor_msgs/msg/LaserScan"
   gz_type_name: "gz.msgs.LaserScan"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/scan/points"
+  gz_topic_name: "/scan/points"
+  ros_type_name: "sensor_msgs/msg/PointCloud2"
+  gz_type_name: "gz.msgs.PointCloudPacked"
   direction: GZ_TO_ROS
 
 # ── EMERGENCY STOP ─────────────────────────────────────────────
