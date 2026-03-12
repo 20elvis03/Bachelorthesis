@@ -2,9 +2,9 @@
 <package format="3">
   <name>my_robot_gazebo</name>
   <version>0.1.0</version>
-  <description>Gazebo launch files for my_robot</description>
-  <maintainer email="du@example.com">Elvis</maintainer>
   <license>Apache-2.0</license>
+  <description>My robot gazebo package</description>
+  <maintainer email="elvis@todo.todo">elvis</maintainer>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
@@ -17,4 +17,5 @@
   <export>
     <build_type>ament_cmake</build_type>
   </export>
+
 </package>

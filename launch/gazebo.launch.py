@@ -10,7 +10,7 @@ from ament_index_python.packages import get_package_share_directory
 def generate_launch_description():
     pkg_desc   = get_package_share_directory('my_robot_description')
     urdf_path   = os.path.join(pkg_desc, 'urdf', 'my_robot_description.urdf')
-    world_path  = os.path.join(pkg_desc, 'worlds', 'my_world.sdf')
+    world_path  = os.path.join(pkg_desc, 'worlds', 'airport_terminal_world.sdf')
     bridge_yaml = os.path.join(pkg_desc, 'config', 'bridge.yaml')
 
     with open(urdf_path, 'r') as f:
@@ -59,7 +59,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         gz_sim,
-        rsp,
-        TimerAction(period=20.0,  actions=[spawn]),
-        TimerAction(period=22.0, actions=[bridge]),
+        TimerAction(period=20.0, actions=[rsp]),
+        TimerAction(period=21.0, actions=[spawn]),
+        TimerAction(period=23.0, actions=[bridge]),
     ])
