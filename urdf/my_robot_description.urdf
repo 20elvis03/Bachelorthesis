@@ -9,13 +9,13 @@
     <color rgba="0.5 0.5 0.5 1.0"/>
   </material>
   <material name="black">
-    <color rgba="0.0 0.0 0.0 1.0"/>
+    <color rgba="0 0 0 1.0"/>
   </material>
   <material name="dark_gray">
     <color rgba="0.25 0.25 0.25 1.0"/>
   </material>
   <material name="yellow">
-    <color rgba="1.0 0.85 0.0 1.0"/>
+    <color rgba="1.0 0.85 0 1.0"/>
   </material>
   <material name="midnight_blue">
     <color rgba="0.1 0.1 0.27 1.0"/>
@@ -27,7 +27,7 @@
   <link name="base_link">
     <visual>
       <geometry>
-        <mesh filename="package://my_robot_description/models/Oberteil.stl"
+        <mesh filename="package://my_robot_description/models/upper_body.stl"
               scale="0.4 0.4 0.4"/>
       </geometry>
       <origin xyz="0 -0.025 0" rpy="0 0 0"/>
@@ -54,7 +54,7 @@
   <link name="base_wheel_left">
     <visual>
       <geometry>
-        <mesh filename="package://my_robot_description/models/Rad_links.stl"
+        <mesh filename="package://my_robot_description/models/wheel_left.stl"
               scale="0.4 0.4 0.4"/>
       </geometry>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -81,7 +81,7 @@
   <link name="base_wheel_right">
     <visual>
       <geometry>
-        <mesh filename="package://my_robot_description/models/Rad_rechts.stl"
+        <mesh filename="package://my_robot_description/models/wheel_right.stl"
               scale="0.4 0.4 0.4"/>
       </geometry>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -103,12 +103,12 @@
   </link>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
-  <!--  SMALL BASE 			                           -->
+  <!--  SMALL BASE                                                 -->
   <!-- ═══════════════════════════════════════════════════════════ -->
   <link name="small_base">
     <visual>
       <geometry>
-        <mesh filename="package://my_robot_description/models/Unterteil.stl"
+        <mesh filename="package://my_robot_description/models/lower_body.stl"
               scale="0.4 0.4 0.4"/>
       </geometry>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -135,7 +135,7 @@
   <link name="small_base_wheel_front">
     <visual>
       <geometry>
-        <mesh filename="package://my_robot_description/models/Rad_vorne.stl"
+        <mesh filename="package://my_robot_description/models/wheel_front.stl"
               scale="0.4 0.4 0.4"/>
       </geometry>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -162,7 +162,7 @@
   <link name="small_base_brush_left">
     <visual>
       <geometry>
-        <mesh filename="package://my_robot_description/models/Buerste_links.stl"
+        <mesh filename="package://my_robot_description/models/brush_left.stl"
               scale="0.4 0.4 0.4"/>
       </geometry>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -189,7 +189,7 @@
   <link name="small_base_brush_right">
     <visual>
       <geometry>
-        <mesh filename="package://my_robot_description/models/Buerste_rechts.stl"
+        <mesh filename="package://my_robot_description/models/brush_right.stl"
               scale="0.4 0.4 0.4"/>
       </geometry>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -216,7 +216,7 @@
   <link name="lidar">
     <visual>
       <geometry>
-        <mesh filename="package://my_robot_description/models/Lidar.stl"
+        <mesh filename="package://my_robot_description/models/lidar.stl"
               scale="0.4 0.4 0.4"/>
       </geometry>
       <origin xyz="0 -0.013 0" rpy="0 0 0"/>
@@ -243,7 +243,7 @@
   <link name="camera_front">
     <visual>
       <geometry>
-        <mesh filename="package://my_robot_description/models/Kamera_vorne.stl"
+        <mesh filename="package://my_robot_description/models/camera_front.stl"
               scale="0.4 0.4 0.4"/>
       </geometry>
       <origin xyz="0 -0.025 0" rpy="0 0 0"/>
@@ -263,7 +263,7 @@
   <link name="camera_front_floor">
     <visual>
       <geometry>
-        <mesh filename="package://my_robot_description/models/Kamera_vorne_unten.stl"
+        <mesh filename="package://my_robot_description/models/camera_front_bottom.stl"
               scale="0.4 0.4 0.4"/>
       </geometry>
       <origin xyz="0 -0.025 0" rpy="0 0 0"/>
@@ -283,7 +283,7 @@
   <link name="camera_left">
     <visual>
       <geometry>
-        <mesh filename="package://my_robot_description/models/Kamera_links.stl"
+        <mesh filename="package://my_robot_description/models/camera_left.stl"
               scale="0.4 0.4 0.4"/>
       </geometry>
       <origin xyz="0 -0.025 0" rpy="0 0 0"/>
@@ -303,7 +303,7 @@
   <link name="camera_right">
     <visual>
       <geometry>
-        <mesh filename="package://my_robot_description/models/Kamera_rechts.stl"
+        <mesh filename="package://my_robot_description/models/camera_right.stl"
               scale="0.4 0.4 0.4"/>
       </geometry>
       <origin xyz="0 -0.025 0" rpy="0 0 0"/>
@@ -323,7 +323,7 @@
   <link name="camera_back">
     <visual>
       <geometry>
-        <mesh filename="package://my_robot_description/models/Kamera_hinten.stl"
+        <mesh filename="package://my_robot_description/models/camera_rear.stl"
               scale="0.4 0.4 0.4"/>
       </geometry>
       <origin xyz="0 -0.025 0" rpy="0 0 0"/>
@@ -343,7 +343,7 @@
   <link name="camera_back_floor">
     <visual>
       <geometry>
-        <mesh filename="package://my_robot_description/models/Kamera_hinten_unten.stl"
+        <mesh filename="package://my_robot_description/models/camera_rear_bottom.stl"
               scale="0.4 0.4 0.4"/>
       </geometry>
       <origin xyz="0 -0.025 0" rpy="0 0 0"/>
@@ -358,7 +358,7 @@
   </link>
 
   <!-- ═══════════════════════════════════════════════════════════ -->
-  <!--  JOINTS				                           -->
+  <!--  JOINTS                                                     -->
   <!-- ═══════════════════════════════════════════════════════════ -->
   <joint name="base_footprint_to_base" type="fixed">
     <parent link="base_footprint"/>
@@ -370,21 +370,21 @@
     <parent link="base_link"/>
     <child link="base_wheel_left"/>
     <origin xyz="-0.636 0.241 0.104" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
+    <axis xyz="0 1.0 0"/>
   </joint>
 
   <joint name="wheel_right_to_base" type="continuous">
     <parent link="base_link"/>
     <child link="base_wheel_right"/>
     <origin xyz="-0.636 -0.267 0.104" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
+    <axis xyz="0 1.0 0"/>
   </joint>
 
   <joint name="small_base_to_base" type="revolute">
     <parent link="base_link"/>
     <child link="small_base"/>
     <origin xyz="0.06 0 0.52" rpy="0 0 0"/>
-    <axis xyz="0 0 1"/>
+    <axis xyz="0 0 1.0"/>
     <limit lower="-0.5" upper="0.5" effort="10.0" velocity="1.0"/>
   </joint>
 
@@ -392,21 +392,21 @@
     <parent link="small_base"/>
     <child link="small_base_wheel_front"/>
     <origin xyz="-0.048 0 -0.416" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
+    <axis xyz="0 1.0 0"/>
   </joint>
 
   <joint name="brush_left_to_small_base" type="continuous">
     <parent link="small_base"/>
     <child link="small_base_brush_left"/>
     <origin xyz="0.42 0.22 -0.37" rpy="0 0 0"/>
-    <axis xyz="0 0 1"/>
+    <axis xyz="0 0 1.0"/>
   </joint>
 
   <joint name="brush_right_to_small_base" type="continuous">
     <parent link="small_base"/>
     <child link="small_base_brush_right"/>
     <origin xyz="0.42 -0.22 -0.37" rpy="0 0 0"/>
-    <axis xyz="0 0 1"/>
+    <axis xyz="0 0 1.0"/>
   </joint>
 
   <joint name="lidar_to_base" type="fixed">
@@ -461,7 +461,7 @@
       <right_joint>wheel_right_to_base</right_joint>
       <wheel_separation>0.508</wheel_separation>
       <wheel_radius>0.104</wheel_radius>
-      <odom_publish_frequency>50</odom_publish_frequency>
+      <odom_publish_frequency>50.0</odom_publish_frequency>
       <topic>/cmd_vel</topic>
       <odom_topic>/odom</odom_topic>
       <tf_topic>/tf</tf_topic>
@@ -496,18 +496,18 @@
       <pose>0 0 0.78 0 0 0</pose>
       <topic>/scan</topic>
       <frame_id>lidar</frame_id>
-      <update_rate>10</update_rate>
+      <update_rate>10.0</update_rate>
       <lidar>
         <scan>
           <horizontal>
             <samples>1200</samples>
-            <resolution>1</resolution>
+            <resolution>1.0</resolution>
             <min_angle>-3.14159</min_angle>
             <max_angle>3.14159</max_angle>
           </horizontal>
           <vertical>
             <samples>64</samples>
-            <resolution>1</resolution>
+            <resolution>1.0</resolution>
             <min_angle>-1.0</min_angle>
             <max_angle>0.15</max_angle>
           </vertical>
@@ -523,23 +523,6 @@
           <stddev>0.01</stddev>
         </noise>
       </lidar>
-      <ignoreEntities>
-        <entity>my_robot::base_link</entity>
-        <entity>my_robot::base_footprint</entity>
-        <entity>my_robot::base_wheel_left</entity>
-        <entity>my_robot::base_wheel_right</entity>
-        <entity>my_robot::small_base</entity>
-        <entity>my_robot::small_base_wheel_front</entity>
-        <entity>my_robot::small_base_brush_left</entity>
-        <entity>my_robot::small_base_brush_right</entity>
-        <entity>my_robot::lidar</entity>
-        <entity>my_robot::camera_front</entity>
-        <entity>my_robot::camera_front_floor</entity>
-        <entity>my_robot::camera_left</entity>
-        <entity>my_robot::camera_right</entity>
-        <entity>my_robot::camera_back</entity>
-        <entity>my_robot::camera_back_floor</entity>
-      </ignoreEntities>
       <always_on>true</always_on>
       <visualize>false</visualize>
     </sensor>
@@ -551,7 +534,7 @@
   <gazebo reference="camera_front">
     <sensor name="camera_front" type="rgbd_camera">
       <topic>/camera/front</topic>
-      <update_rate>30</update_rate>
+      <update_rate>30.0</update_rate>
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>
@@ -571,7 +554,7 @@
   <gazebo reference="camera_front_floor">
     <sensor name="camera_front_floor" type="rgbd_camera">
       <topic>/camera/front/floor</topic>
-      <update_rate>30</update_rate>
+      <update_rate>30.0</update_rate>
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>
@@ -591,7 +574,7 @@
   <gazebo reference="camera_left">
     <sensor name="camera_left" type="rgbd_camera">
       <topic>/camera/left</topic>
-      <update_rate>30</update_rate>
+      <update_rate>30.0</update_rate>
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>
@@ -612,7 +595,7 @@
   <gazebo reference="camera_right">
     <sensor name="camera_right" type="rgbd_camera">
       <topic>/camera/right</topic>
-      <update_rate>30</update_rate>
+      <update_rate>30.0</update_rate>
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>
@@ -632,7 +615,7 @@
   <gazebo reference="camera_back">
     <sensor name="camera_back" type="rgbd_camera">
       <topic>/camera/back</topic>
-      <update_rate>30</update_rate>
+      <update_rate>30.0</update_rate>
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>
@@ -653,7 +636,7 @@
   <gazebo reference="camera_back_floor">
     <sensor name="camera_back_floor" type="rgbd_camera">
       <topic>/camera/back/floor</topic>
-      <update_rate>30</update_rate>
+      <update_rate>30.0</update_rate>
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>

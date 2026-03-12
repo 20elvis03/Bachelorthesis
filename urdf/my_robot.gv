@@ -1,5 +1,6 @@
 digraph G {
 node [shape=box];
+"base_footprint" [label="base_footprint"];
 "base_link" [label="base_link"];
 "camera_back_floor" [label="camera_back_floor"];
 "camera_back" [label="camera_back"];
@@ -15,17 +16,19 @@ node [shape=box];
 "base_wheel_left" [label="base_wheel_left"];
 "base_wheel_right" [label="base_wheel_right"];
 node [shape=ellipse, color=blue, fontcolor=blue];
-"base_link" -> "camera_back_floor_to_base" [label="xyz: 0 0 0 \nrpy: 0 -0 0"]
+"base_footprint" -> "base_footprint_to_base" [label="xyz: 0 0 0.104 \nrpy: 0 -0 0"]
+"base_footprint_to_base" -> "base_link"
+"base_link" -> "camera_back_floor_to_base" [label="xyz: -0.77 -0.025 0.4615 \nrpy: 0 -0 -3.14159"]
 "camera_back_floor_to_base" -> "camera_back_floor"
-"base_link" -> "camera_back_to_base" [label="xyz: 0 0 0 \nrpy: 0 -0 0"]
+"base_link" -> "camera_back_to_base" [label="xyz: -0.765 -0.025 0.56 \nrpy: 0 -0 -3.14159"]
 "camera_back_to_base" -> "camera_back"
-"base_link" -> "camera_front_floor_to_base" [label="xyz: 0 0 0 \nrpy: 0 -0 0"]
+"base_link" -> "camera_front_floor_to_base" [label="xyz: 0.35 0.01 0.476 \nrpy: 0 -0 0"]
 "camera_front_floor_to_base" -> "camera_front_floor"
-"base_link" -> "camera_front_to_base" [label="xyz: 0 0 0 \nrpy: 0 -0 0"]
+"base_link" -> "camera_front_to_base" [label="xyz: 0.346 0.01 0.65 \nrpy: 0 -0 0"]
 "camera_front_to_base" -> "camera_front"
-"base_link" -> "camera_left_to_base" [label="xyz: 0 0 0 \nrpy: 0 -0 0"]
+"base_link" -> "camera_left_to_base" [label="xyz: -0.374 0.294 0.56 \nrpy: 0 -0 1.5708"]
 "camera_left_to_base" -> "camera_left"
-"base_link" -> "camera_right_to_base" [label="xyz: 0 0 0 \nrpy: 0 -0 0"]
+"base_link" -> "camera_right_to_base" [label="xyz: -0.33 -0.32 0.56 \nrpy: 0 0 -1.5708"]
 "camera_right_to_base" -> "camera_right"
 "base_link" -> "lidar_to_base" [label="xyz: -0.308 0 1.22 \nrpy: 0 -0 0"]
 "lidar_to_base" -> "lidar"
@@ -37,8 +40,8 @@ node [shape=ellipse, color=blue, fontcolor=blue];
 "brush_right_to_small_base" -> "small_base_brush_right"
 "small_base" -> "wheel_front_to_small_base" [label="xyz: -0.048 0 -0.416 \nrpy: 0 -0 0"]
 "wheel_front_to_small_base" -> "small_base_wheel_front"
-"base_link" -> "wheel_left_to_base" [label="xyz: -0.636 0.26 0.104 \nrpy: 0 -0 0"]
+"base_link" -> "wheel_left_to_base" [label="xyz: -0.636 0.241 0.104 \nrpy: 0 -0 0"]
 "wheel_left_to_base" -> "base_wheel_left"
-"base_link" -> "wheel_right_to_base" [label="xyz: -0.636 -0.26 0.104 \nrpy: 0 -0 0"]
+"base_link" -> "wheel_right_to_base" [label="xyz: -0.636 -0.267 0.104 \nrpy: 0 -0 0"]
 "wheel_right_to_base" -> "base_wheel_right"
 }

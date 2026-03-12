@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>my_robot_description</name>
   <version>0.1.0</version>
-  <description>Robot description for my_robot</description>
-  <maintainer email="du@example.com">Elvis</maintainer>
   <license>Apache-2.0</license>
+  <name>my_robot_description</name>
+  <description>My robot description package</description>
+  <maintainer email="elvis@todo.todo">elvis</maintainer>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
@@ -14,7 +14,13 @@
   <exec_depend>ros_gz_sim</exec_depend>
   <exec_depend>ros_gz_bridge</exec_depend>
 
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>tf2_ros</depend>
+  <exec_depend>python3-transforms3d</exec_depend>
+
   <export>
     <build_type>ament_cmake</build_type>
   </export>
+
 </package>

@@ -4,12 +4,19 @@ project(my_robot_description)
 find_package(ament_cmake REQUIRED)
 
 install(DIRECTORY
+  config
   launch
+  models
+  scripts
   urdf
   worlds
-  config
-  models
   DESTINATION share/${PROJECT_NAME}/
+)
+
+install(PROGRAMS
+  scripts/autonomous.py
+  scripts/manually.py
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 ament_package()
