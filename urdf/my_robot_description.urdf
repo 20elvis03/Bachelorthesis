@@ -500,13 +500,13 @@
       <lidar>
         <scan>
           <horizontal>
-            <samples>1200</samples>
+            <samples>980</samples>
             <resolution>1.0</resolution>
             <min_angle>-3.14159</min_angle>
             <max_angle>3.14159</max_angle>
           </horizontal>
           <vertical>
-            <samples>64</samples>
+            <samples>32</samples>
             <resolution>1.0</resolution>
             <min_angle>-1.0</min_angle>
             <max_angle>0.15</max_angle>
@@ -538,8 +538,8 @@
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>
-          <width>1920</width>
-          <height>1080</height>
+          <width>640</width>
+          <height>480</height>
         </image>
         <clip><near>0.3</near><far>60.0</far></clip>
       </camera>
@@ -558,8 +558,8 @@
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>
-          <width>1920</width>
-          <height>1080</height>
+          <width>640</width>
+          <height>480</height>
         </image>
         <clip><near>0.3</near><far>60.0</far></clip>
       </camera>
@@ -578,8 +578,8 @@
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>
-          <width>1920</width>
-          <height>1080</height>
+          <width>640</width>
+          <height>480</height>
         </image>
         <clip><near>0.3</near><far>60.0</far></clip>
       </camera>
@@ -599,8 +599,8 @@
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>
-          <width>1920</width>
-          <height>1080</height>
+          <width>640</width>
+          <height>480</height>
         </image>
         <clip><near>0.3</near><far>60.0</far></clip>
       </camera>
@@ -619,8 +619,8 @@
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>
-          <width>1920</width>
-          <height>1080</height>
+          <width>640</width>
+          <height>480</height>
         </image>
         <clip><near>0.3</near><far>60.0</far></clip>
       </camera>
@@ -640,8 +640,8 @@
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>
-          <width>1920</width>
-          <height>1080</height>
+          <width>640</width>
+          <height>480</height>
         </image>
         <clip><near>0.3</near><far>60.0</far></clip>
       </camera>

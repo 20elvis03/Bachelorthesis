@@ -1,3 +1,8 @@
+# ═══════════════════════════════════════════════════════════════
+#  ros_gz_bridge Konfiguration – my_robot
+#  Gazebo Ionic ↔ ROS2 Kilted
+# ═══════════════════════════════════════════════════════════════
+
 # ── SYSTEM ─────────────────────────────────────────────────────
 
 - ros_topic_name: "/clock"
@@ -6,7 +11,7 @@
   gz_type_name: "gz.msgs.Clock"
   direction: GZ_TO_ROS
 
-# ── Drive & Odometry ───────────────────────────────────────────
+# ── ANTRIEB & ODOMETRIE ────────────────────────────────────────
 
 - ros_topic_name: "/cmd_vel"
   gz_topic_name: "/cmd_vel"
@@ -19,8 +24,14 @@
   ros_type_name: "nav_msgs/msg/Odometry"
   gz_type_name: "gz.msgs.Odometry"
   direction: GZ_TO_ROS
+  
+- ros_topic_name: "/world/pose_info"
+  gz_topic_name: "/world/airport_terminal_world/dynamic_pose/info"
+  ros_type_name: "tf2_msgs/msg/TFMessage"
+  gz_type_name: "gz.msgs.Pose_V"
+  direction: GZ_TO_ROS
 
-# ── Control ────────────────────────────────────────────────────
+# ── STEUERUNG ──────────────────────────────────────────────────
 
 - ros_topic_name: "/steering"
   gz_topic_name: "/steering"
@@ -64,7 +75,7 @@
   gz_type_name: "gz.msgs.Boolean"
   direction: BIDIRECTIONAL
 
-# ── CAMERAS ────────────────────────────────────────────────────
+# ── KAMERAS ────────────────────────────────────────────────────
 
 - ros_topic_name: "/camera/front/image"
   gz_topic_name: "/camera/front/image"
@@ -162,7 +173,7 @@
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
 
-# ── Surveillance Cameras ───────────────────────────────────────
+# ── ÜBERWACHUNGSKAMERAS (Welt-fest) ────────────────────────────
 
 - ros_topic_name: "/surveillance/nw"
   gz_topic_name: "/surveillance/nw"
