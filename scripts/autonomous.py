@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
 """
-auto_mow.py  –  Autonomer Rasenmäher für my_robot (3-Rad, DiffDrive + Lenkung)
-===============================================================================
 Roboter-Aufbau:
   - Antrieb:   DiffDrive (linkes + rechtes Hinterrad) -> /cmd_vel
   - Lenkung:   small_base_to_base revolute joint      -> /steering (rad)
   - Lenkbereich: +-0.5 rad (~+-28 Grad)
-  - Sensoren:  3D-LiDAR (64 Kanaele) -> /scan, Odometrie -> /odom
-
-Maehbereich: tile_X_0 bis tile_X_7 -> y-Grenze bei +15.0 m
+  - Sensoren:  3D-LiDAR /scan, Odometrie -> /odom
 Spawn: x=22.5, y=-22.5, Blickrichtung +Y (Yaw ca. +pi/2)
 """
 
@@ -24,17 +20,15 @@ import tf_transformations
 
 
 # ── Konfiguration ────────────────────────────────────────────────────────────
-DRIVE_SPEED      = 1.5    # m/s vorwärts (Mähgeschwindigkeit)
-AVOID_SPEED      = 0.3    # m/s beim Ausweichen
-TURN_SPEED       = 0.4    # rad/s Winkelgeschwindigkeit beim Wenden
+DRIVE_SPEED      = 1.5    # m/s vorwärts
+AVOID_SPEED      = 0.4    # m/s beim Ausweichen
+TURN_SPEED       = 0.5    # rad/s Winkelgeschwindigkeit beim Wenden
 
 OBSTACLE_FRONT   = 2.5    # m – Hindernis erkannt → ausweichen
 OBSTACLE_STOP    = 0.8    # m – Notstopp
 WALL_TURN_DIST   = 3.0    # m – Bahnende erkannt → Wende einleiten
 SIDE_MIN_DIST    = 1.2    # m – Mindestabstand seitlich für Wende
 
-# Mähbereich: maximal bis tile_X_7 (Mitte y=12.5, Grenze zu _8 bei y=15.0)
-# Sicherheitsabstand -0.5 m → Roboter dreht spätestens bei y=14.5
 X_MIN_BOUNDARY   = -23.5   # m – absoluter Y-Stopp (Odometrie-basiert)
 X_MAX_BOUNDARY   = 23.5   # m – absoluter Y-Stopp (Odometrie-basiert)
 Y_MIN_BOUNDARY   = -23.5   # m – absoluter Y-Stopp (Odometrie-basiert)
@@ -71,9 +65,9 @@ NUM_LANES        = 60
 # Stecken-Erkennung waehrend Wende
 # Wenn der Roboter sich X Sekunden dreht aber < STUCK_DIST_M Meter bewegt hat
 STUCK_CHECK_TIME = 3.0    # s – nach dieser Zeit Position pruefen
-STUCK_DIST_M     = 0.15   # m – weniger als das = feststeckend
+STUCK_DIST_M     = 0.2   # m – weniger als das = feststeckend
 # Rueckwaerts-Dreh-Manöver
-REVERSE_SPEED    = -0.25  # m/s rueckwaerts
+REVERSE_SPEED    = -0.4  # m/s rueckwaerts
 REVERSE_STEER    = 0.45   # rad Lenkeinschlag beim Rueckwaertsdrehen
 REVERSE_YAW_DEG  = 90.0   # Grad – um wieviel Grad soll rueckwaerts gedreht werden
 # ─────────────────────────────────────────────────────────────────────────────
@@ -82,13 +76,13 @@ STATE_DRIVE        = 'DRIVE'
 STATE_BRAKE        = 'BRAKE'
 STATE_TURN_CHECK   = 'TURN_CHECK'
 STATE_TURN         = 'TURN'
-STATE_REVERSE_TURN = 'REVERSE_TURN'   # Rueckwaerts + 90-Grad-Drehung
+STATE_REVERSE_TURN = 'REVERSE_TURN'
 STATE_AVOID        = 'AVOID'
 STATE_RETURN       = 'RETURN'
 STATE_DONE         = 'DONE'
 
 
-class AutoMower(Node):
+class AutoDrive(Node):
     def __init__(self):
         super().__init__('auto_mower')
 	
@@ -143,12 +137,12 @@ class AutoMower(Node):
         self._log_timer       = 0.0
 
         self.create_timer(0.05, lambda: self.loop(0.05))
-        self.get_logger().info('AutoMower bereit – warte auf Sensoren...')
+        self.get_logger().info('AutoDrive bereit – warte auf Sensoren...')
 
     # ── LiDAR ────────────────────────────────────────────────────────────────
     def scan_cb(self, msg: LaserScan):
-        n_horiz   = 1200
-        n_vert    = 64
+        n_horiz   = 960
+        n_vert    = 32
         total_pts = len(msg.ranges)
 
         front_min = 99.0
@@ -159,7 +153,7 @@ class AutoMower(Node):
         front_cone  = math.radians(FRONT_CONE)
         side_start  = math.radians(SIDE_CONE_START)
         side_end    = math.radians(SIDE_CONE_END)
-        back_thresh = math.radians(180 - BACK_CONE)   # |angle| > 150° = hinten
+        back_thresh = math.radians(180 - BACK_CONE)
 
         def classify(r, angle):
             nonlocal front_min, left_min, right_min, back_min
@@ -219,7 +213,7 @@ class AutoMower(Node):
                 f'Start: x={self.pos_x:.1f} y={self.pos_y:.1f}  '
                 f'vorne={self.dist_front:.1f}m')
 
-    # ── Global Pose ────────────────────────────────────────────────────────────
+    # ── Global Pose ──────────────────────────────────────────────────────────
     def global_pose_cb(self, msg: TFMessage):
       if len(msg.transforms) == 0:
         return
@@ -236,7 +230,7 @@ class AutoMower(Node):
         if not self.odom_ready:
             return
 
-        # Periodisches 360°-Sensor-Log alle 2 Sekunden
+        # Periodisches 360°-Sensor-Log jede Sekunde
         self._log_timer += dt
         if self._log_timer >= 1.0:
             self._log_timer = 0.0
@@ -515,7 +509,7 @@ class AutoMower(Node):
 
 def main():
     rclpy.init()
-    node = AutoMower()
+    node = AutoDrive()
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:

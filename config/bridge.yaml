@@ -1,8 +1,3 @@
-# ═══════════════════════════════════════════════════════════════
-#  ros_gz_bridge Konfiguration – my_robot
-#  Gazebo Ionic ↔ ROS2 Kilted
-# ═══════════════════════════════════════════════════════════════
-
 # ── SYSTEM ─────────────────────────────────────────────────────
 
 - ros_topic_name: "/clock"
@@ -11,7 +6,7 @@
   gz_type_name: "gz.msgs.Clock"
   direction: GZ_TO_ROS
 
-# ── ANTRIEB & ODOMETRIE ────────────────────────────────────────
+# ──  DRIVING & ODOMETRY ────────────────────────────────────────
 
 - ros_topic_name: "/cmd_vel"
   gz_topic_name: "/cmd_vel"
@@ -31,7 +26,7 @@
   gz_type_name: "gz.msgs.Pose_V"
   direction: GZ_TO_ROS
 
-# ── STEUERUNG ──────────────────────────────────────────────────
+# ── CONTROL ────────────────────────────────────────────────────
 
 - ros_topic_name: "/steering"
   gz_topic_name: "/steering"
@@ -75,7 +70,7 @@
   gz_type_name: "gz.msgs.Boolean"
   direction: BIDIRECTIONAL
 
-# ── KAMERAS ────────────────────────────────────────────────────
+# ── CAMERAS ────────────────────────────────────────────────────
 
 - ros_topic_name: "/camera/front/image"
   gz_topic_name: "/camera/front/image"
@@ -173,7 +168,7 @@
   gz_type_name: "gz.msgs.CameraInfo"
   direction: GZ_TO_ROS
 
-# ── ÜBERWACHUNGSKAMERAS (Welt-fest) ────────────────────────────
+# ── SURVEILLANCE CAMERAS ───────────────────────────────────────
 
 - ros_topic_name: "/surveillance/nw"
   gz_topic_name: "/surveillance/nw"
