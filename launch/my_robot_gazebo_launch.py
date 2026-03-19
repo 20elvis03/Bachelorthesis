@@ -7,6 +7,11 @@ from launch_ros.substitutions import FindPackageShare
 from launch.substitutions import PathJoinSubstitution
 from ament_index_python.packages import get_package_share_directory
 
+GZ_STARTUP_DELAY = 22.0
+RSP_DELAY        = GZ_STARTUP_DELAY + 1.0
+SPAWN_DELAY      = GZ_STARTUP_DELAY + 3.0
+BRIDGE_DELAY     = GZ_STARTUP_DELAY + 5.0
+
 def generate_launch_description():
     pkg_desc   = get_package_share_directory('my_robot_description')
     urdf_path   = os.path.join(pkg_desc, 'urdf', 'my_robot_description.urdf')
@@ -59,7 +64,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         gz_sim,
-        TimerAction(period=20.0, actions=[rsp]),
-        TimerAction(period=21.0, actions=[spawn]),
-        TimerAction(period=23.0, actions=[bridge]),
+        TimerAction(period=RSP_DELAY,    actions=[rsp]),
+        TimerAction(period=SPAWN_DELAY,  actions=[spawn]),
+        TimerAction(period=BRIDGE_DELAY, actions=[bridge]),
     ])

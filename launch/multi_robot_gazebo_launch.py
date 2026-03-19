@@ -7,17 +7,12 @@ from launch_ros.substitutions import FindPackageShare
 from launch.substitutions import PathJoinSubstitution
 from ament_index_python.packages import get_package_share_directory
 
-
-# ─────────────────────────────────────────────────────────────
-#  KONFIGURATION: Startpositionen der 3 Roboter
-# ─────────────────────────────────────────────────────────────
 ROBOTS = [
     {"name": "robot_1", "x":  0.0, "y":  0.0, "z": 0.5},
     {"name": "robot_2", "x":  5.0, "y":  0.0, "z": 0.5},
     {"name": "robot_3", "x": -5.0, "y":  0.0, "z": 0.5},
 ]
 
-# Bridge-Topics pro Roboter (werden mit Namespace geprefixed)
 BRIDGE_TOPICS_PER_ROBOT = [
     "/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist",
     "/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry",
@@ -28,11 +23,8 @@ BRIDGE_TOPICS_PER_ROBOT = [
 
 
 def make_robot_group(robot: dict, urdf_content: str) -> GroupAction:
-    """Erzeugt alle Nodes für einen Roboter unter seinem Namespace."""
-
     ns = robot["name"]
 
-    # Jeder Roboter braucht seinen eigenen robot_state_publisher
     rsp = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
@@ -41,7 +33,7 @@ def make_robot_group(robot: dict, urdf_content: str) -> GroupAction:
         parameters=[{
             "robot_description": urdf_content,
             "use_sim_time": True,
-            "frame_prefix": ns + "/",   # TF-Frames bekommen den Namespace-Prefix
+            "frame_prefix": ns + "/",
         }],
         remappings=[
             ("/tf", f"/{ns}/tf"),
@@ -49,7 +41,6 @@ def make_robot_group(robot: dict, urdf_content: str) -> GroupAction:
         ]
     )
 
-    # Roboter in Gazebo spawnen
     spawn = Node(
         package="ros_gz_sim",
         executable="create",
@@ -64,15 +55,12 @@ def make_robot_group(robot: dict, urdf_content: str) -> GroupAction:
         ]
     )
 
-    # Bridge: Gazebo-Topics ↔ ROS2-Topics (mit Namespace)
     bridge_args = []
     for topic in BRIDGE_TOPICS_PER_ROBOT:
-        # z.B. "/cmd_vel@..." → "/robot_1/cmd_vel@..."
         topic_name = topic.split("@")[0]
         rest = "@".join(topic.split("@")[1:])
         bridge_args.append(f"/{ns}{topic_name}@{rest}")
 
-    # Clock global (nur einmal, aber alle Roboter brauchen use_sim_time)
     bridge_args.append("/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock")
 
     bridge = Node(
@@ -94,16 +82,14 @@ def make_robot_group(robot: dict, urdf_content: str) -> GroupAction:
 
 def generate_launch_description():
     pkg_share = get_package_share_directory("my_robot_description")
-
-    # URDF einlesen
     urdf_path = os.path.join(pkg_share, "urdf", "my_robot_description.urdf")
+
     if not os.path.exists(urdf_path):
         raise FileNotFoundError(f"URDF nicht gefunden: {urdf_path}")
     with open(urdf_path, "r") as f:
         robot_desc = f.read()
 
-    # ── 1. Gazebo Ionic starten ──────────────────────────────
-    world_file = os.path.join(pkg_share, "worlds", "my_world.sdf")
+    world_file = os.path.join(pkg_share, "worlds", "airport_terminal_world.sdf")
     gz_sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             PathJoinSubstitution([
@@ -115,17 +101,14 @@ def generate_launch_description():
         }.items()
     )
 
-    # ── 2. Roboter-Gruppen (mit Verzögerung, damit Gazebo erst startet) ──
     robot_groups = []
     for i, robot in enumerate(ROBOTS):
-        # Jeder Roboter startet 2s versetzt, damit der Spawn nicht kollidiert
         delayed = TimerAction(
-            period=float(3 + i * 2),  # robot_1 nach 3s, robot_2 nach 5s, robot_3 nach 7s
+            period=float(3 + i * 2),
             actions=[make_robot_group(robot, robot_desc)]
         )
         robot_groups.append(delayed)
 
-    # ── 3. RViz2 (optional, zeigt alle 3 Roboter) ───────────
     rviz_config = os.path.join(pkg_share, "config", "display.rviz")
     rviz = Node(
         package="rviz2",
@@ -139,5 +122,5 @@ def generate_launch_description():
     return LaunchDescription([
         gz_sim,
         *robot_groups,
-        TimerAction(period=10.0, actions=[rviz]),  # RViz nach 10s starten
+        TimerAction(period=10.0, actions=[rviz]),
     ])
