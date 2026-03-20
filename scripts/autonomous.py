@@ -7,7 +7,6 @@ Roboter-Aufbau:
   - Sensoren:  3D-LiDAR /scan, Odometrie -> /odom
 Spawn: x=22.5, y=-22.5, Blickrichtung +Y (Yaw ca. +pi/2)
 """
-
 import math
 import rclpy
 from rclpy.node import Node
@@ -62,15 +61,13 @@ TURN_FORWARD_SPD = 0.2    # m/s
 
 NUM_LANES        = 60
 
-# Stecken-Erkennung waehrend Wende
-# Wenn der Roboter sich X Sekunden dreht aber < STUCK_DIST_M Meter bewegt hat
-STUCK_CHECK_TIME = 3.0    # s – nach dieser Zeit Position pruefen
-STUCK_DIST_M     = 0.2   # m – weniger als das = feststeckend
+STUCK_CHECK_TIME = 7.0    # s – nach dieser Zeit Position pruefen
+STUCK_DIST_M     = 0.1   # m – weniger als das = feststeckend
+
 # Rueckwaerts-Dreh-Manöver
 REVERSE_SPEED    = -0.4  # m/s rueckwaerts
 REVERSE_STEER    = 0.45   # rad Lenkeinschlag beim Rueckwaertsdrehen
 REVERSE_YAW_DEG  = 90.0   # Grad – um wieviel Grad soll rueckwaerts gedreht werden
-# ─────────────────────────────────────────────────────────────────────────────
 
 STATE_DRIVE        = 'DRIVE'
 STATE_BRAKE        = 'BRAKE'
@@ -84,7 +81,7 @@ STATE_DONE         = 'DONE'
 
 class AutoDrive(Node):
     def __init__(self):
-        super().__init__('auto_mower')
+        super().__init__('auto_drive')
 	
         self.cmd_pub   = self.create_publisher(Twist,   '/cmd_vel',  10)
         self.steer_pub = self.create_publisher(Float64, '/steering', 10)
@@ -133,7 +130,6 @@ class AutoDrive(Node):
         self.obstacle_back    = False
         self.wall_near        = False
 
-        # Periodisches Sensor-Log (alle 2 s)
         self._log_timer       = 0.0
 
         self.create_timer(0.05, lambda: self.loop(0.05))
@@ -297,7 +293,7 @@ class AutoDrive(Node):
                 return
 
             # Wand / Bahnende per LiDAR
-            if self.wall_near:
+            #if self.wall_near:
                 self._publish(0.0, 0.0, 0.0)
                 self.brake_timer = 0.0
                 self.state = STATE_BRAKE
