@@ -1,907 +1,918 @@
 #!/usr/bin/env python3
-"""
-Robot Setup:
-  - Drive:    DiffDrive (left + right rear wheel) -> /cmd_vel
-  - Steering: small_base_to_base revolute joint   -> /steering (rad)
-  - Steering range: +-0.5 rad (~+-28 degrees)
-  - Sensors:  3D-LiDAR /scan, Odometry -> /odom
-Spawn: x=22.5, y=-22.5, facing +Y (Yaw ~+pi/2)
-"""
-import math
-import rclpy
+import math, rclpy, tf_transformations, struct
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float64
-from sensor_msgs.msg import LaserScan
-from nav_msgs.msg import Odometry
+from sensor_msgs.msg import PointCloud2
 from tf2_msgs.msg import TFMessage
-import tf_transformations
 
 
-# ── Configuration ────────────────────────────────────────────────────────────
-DRIVE_SPEED      = 1.5    # m/s forward
-DRIVE_LANE_KP    = 2.0    # gain for lane-keeping atan2 correction in DRIVE
-AVOID_SPEED      = 1    # m/s during avoidance
-TURN_SPEED       = 3.0    # rad/s angular velocity during U-turn (3x faster)
+#ros2 topic pub --once /emergency_reset std_msgs/Float64 "data: 1.0"
 
-OBSTACLE_FRONT   = 3.0    # m – obstacle detected → avoid
-OBSTACLE_STOP    = 0.8    # m – emergency stop
-WALL_TURN_DIST   = 3.0    # m – lane end detected → initiate U-turn
-SIDE_MIN_DIST    = 1.2    # m – minimum side clearance for U-turn
 
-X_MIN_BOUNDARY   = -23.5   # m – absolute boundary (odometry-based)
-X_MAX_BOUNDARY   = 23.5   # m – absolute boundary (odometry-based)
-Y_MIN_BOUNDARY   = -23.5   # m – absolute boundary (odometry-based)
-Y_MAX_BOUNDARY   = 15.0   # m – absolute boundary (odometry-based)
+# ── Drive ────────────────────────────────────────────────────────────────────
+DRIVE_SPEED      = 1.5 # forward speed (m/s)
+DRIVE_LANE_KP    = 2.0 # lane-keeping steering gain
 
-# LiDAR angle cones (degrees) – 360° coverage
-FRONT_CONE       = 25     # ±25° front
-SIDE_CONE_START  = 55     # from 55° side
-SIDE_CONE_END    = 125    # to 125° side
-BACK_CONE        = 30     # ±30° rear (|angle| > 150°)
+# ── Safety ───────────────────────────────────────────────────────────────────
+MAX_SPEED_MPS     = 1.5 # absolute max speed (m/s) – emergency shutdown if exceeded
 
-# Obstacle thresholds
-OBSTACLE_BACK    = 0.6    # m – emergency stop reverse
+# ── Obstacles ────────────────────────────────────────────────────────────────
+OBSTACLE_FRONT   = 2.9 # front obstacle detection distance (m)
+OBSTACLE_STOP    = 1.2 # emergency stop distance (m)
+OBSTACLE_BACK    = 0.6 # rear obstacle detection (m)
+SIDE_MIN_DIST    = 1.2 # minimum side clearance (m)
 
-# LiDAR 3D → 2D
-LIDAR_HORIZ_IDX  = 55
-LIDAR_HORIZ_TOL  = 3
+# ── Boundaries ───────────────────────────────────────────────────────────────
+X_MIN               = -23.0
+X_MAX               = 23.0
+Y_MIN               = -23.0
+Y_MAX               = 15.0
+BOUNDARY_GRACE_DIST = 3.0 # ignore boundary after U-turn until this far away (m)
 
-# Avoidance parameters
-AVOID_STEER      = 0.35   # rad – steering angle during avoidance
-AVOID_ANGULAR    = 0.3    # rad/s – angular.z during avoidance
+# ── Garage / Charging ────────────────────────────────────────────────────
+GARAGE_X_MIN        = 13.0
+GARAGE_X_MAX        = 24.5
+GARAGE_Y_MIN        = -34.5
+GARAGE_Y_MAX        = -23.0
 
-# Bug2 Wall-Following parameters
-BUG2_FRONT_DIST      = 3.0    # m – threshold FRONT → TURN (conservative)
-BUG2_FOLLOW_RANGE    = 2.5    # m – threshold SIDE → FOLLOW (stricter, filters room walls)
-BUG2_WALL_LOST_MARGIN= 1.5    # m – wall lost when d_wall > obs_dist + MARGIN
-BUG2_MIN_TURN_TIME   = 3.0    # s – minimum time in TURN before "wall lost" allowed
-BUG2_MIN_FOLLOW_TIME = 30.0   # s – minimum wall-following time before M-line check
-BUG2_LINE_TOL        = 0.8    # m – distance to M-Line for return (was 0.4)
-BUG2_FOLLOW_WALL_LIN = 0.8    # m/s – forward speed during wall following
-BUG2_FOLLOW_TARGET   = 1.5    # m – target distance to wall for P-controller
-BUG2_FOLLOW_KP       = 0.5    # proportional gain: steering correction per meter deviation
-BUG2_TURN_ANG        = 0.8    # rad/s – turn rate when turning away from wall
-BUG2_TURN_FWD        = 0.6    # m/s – forward during turn (car needs motion to steer!)
-BUG2_TIMEOUT         = 120.0  # s – fallback: abort Bug2 after this time
-BUG2_STUCK_TIME      = 12.0   # s – check position after this time
-BUG2_STUCK_DIST      = 0.3    # m – less than this = stuck
-BUG2_SAFE_RETURN_DIST= 4.0    # m – minimum distance to nearest obstacle for safe RETURN
+CHARGE_ZONE_RADIUS  = 2.5 # sensors disabled within this radius of dock
 
-# Bug2 M-Line return parameters
-BUG2_RETURN_SPEED    = 1.5    # m/s – forward speed during M-Line return (was 1.0)
-BUG2_RETURN_YAW_TOL  = 15.0   # ° – tolerance for "yaw on course" (relaxed)
-BUG2_RETURN_KP       = 1.5    # gain for yaw correction (strong)
-BUG2_RETURN_LOOKAHEAD= 3.0    # m – lookahead on M-Line (smaller = faster convergence)
+# ── LiDAR cones (degrees) ───────────────────────────────────────────────────
+FRONT_CONE      = 25
+SIDE_CONE_START = 55
+SIDE_CONE_END   = 125
+BACK_CONE       = 30
+FDIAG_START     = 25
+FDIAG_END       = 55
 
-# LiDAR – additional cones for Bug2 Wall-Following
-FRIGHT_CONE_START = 25    # ° – front-right from
-FRIGHT_CONE_END   = 55    # ° – front-right to
-FLEFT_CONE_START  = 25    # ° – front-left from
-FLEFT_CONE_END    = 55    # ° – front-left to
+# ── U-turn ───────────────────────────────────────────────────────────────────
+MAX_STEER        = 0.49 # maximum steering angle (rad)
+TURN_SPEED       = 3.0 # angular speed during turn (rad/s)
+TURN_FORWARD_SPD = 0.8 # forward speed during turn (m/s)
+LANE_OFFSET      = 2.0 # X offset for new lane after U‑turn
 
-# U-turn parameters
-MAX_STEER        = 0.48   # rad
-TURN_FORWARD_SPD = 0.8    # m/s (was 0.4 – faster turn radius)
-LANE_OFFSET      = 2.0    # m – lateral offset between lanes (boustrophedon)
+# ── Stuck / Reverse ─────────────────────────────────────────────────────────
+STUCK_CHECK_TIME = 7.0 # time to check for progress (s)
+STUCK_DIST_M     = 0.15 # minimum distance to consider progress (m)
+REVERSE_SPEED    = -0.4 # reverse speed (m/s)
+REVERSE_STEER    = 0.49 # steering while reversing (rad)
+REVERSE_YAW_DEG  = 90.0 # yaw change needed to finish reverse (deg)
 
-NUM_LANES        = 60
+# ── Bug2 Wall-Following ─────────────────────────────────────────────────────
+BUG2_LINE_TOL         = 0.3 # max distance to M-Line to consider "reached"
+BUG2_FOLLOW_WALL_LIN  = 0.7 # forward speed while wall-following
+BUG2_FOLLOW_TARGET    = 1.7 # desired distance to wall (m)
+BUG2_TURN_ANG         = 1.2 # angular speed during initial bug2 turn
+BUG2_TURN_FWD         = 0.5 # forward speed during initial bug2 turn
 
-STUCK_CHECK_TIME = 7.0    # s – check position after this time
-STUCK_DIST_M     = 0.1   # m – less than this = stuck
+# ── Bug2 Return ──────────────────────────────────────────────────────────────
+BUG2_RETURN_SPEED     = 1.5
+BUG2_RETURN_KP        = 1.5
+BUG2_RETURN_LOOKAHEAD = 3.0 # look-ahead distance for M-Line return
 
-# Reverse turn maneuver
-REVERSE_SPEED    = -0.4  # m/s reverse
-REVERSE_STEER    = 0.45   # rad steering angle during reverse turn
-REVERSE_YAW_DEG  = 90.0   # degrees – how far to reverse-turn
+# ── Global Stuck Recovery ───────────────────────────────────────────────
+GLOBAL_STUCK_TIME     = 50.0
+GLOBAL_STUCK_DIST     = 0.15
+GLOBAL_REV_TIME       = 5.0
+GLOBAL_REV_SPEED      = -0.5
+GLOBAL_REV_STEER      = 0.45
 
-STATE_DRIVE        = 'DRIVE'
-STATE_BRAKE        = 'BRAKE'
-STATE_TURN_CHECK   = 'TURN_CHECK'
-STATE_TURN         = 'TURN'
-STATE_REVERSE_TURN = 'REVERSE_TURN'
-STATE_AVOID        = 'BUG2_WALL'      # Bug2 Wall-Following
-STATE_BUG2_RETURN  = 'BUG2_RETURN'   # Bug2 return to M-Line
-STATE_DONE         = 'DONE'
+# ── Go Home (low battery) ───────────────────────────────────────────────────
+BAT_LOW_PCT           = 85.0 # start heading home (%)
+HOME_SPEED            = 1.0
+HOME_KP               = 2.0
+HOME_ARRIVE_DIST      = 1.5 # close enough to spawn = arrived (m)
+CHARGE_RATE_PCT       = 1.0 # battery % gained per second while charging
 
-# Bug2 Wall-Following Sub-States
-BUG2_WF_TURN   = 1   # Turn away from wall (wall in front)
-BUG2_WF_FOLLOW = 2   # Follow wall
-BUG2_WF_CLEAR  = 3   # Corner detected → drive straight to clear object
-
-# Bug2 corner/clear detection
-BUG2_CORNER_JUMP       = 0.4    # m – d_wall_side jump per tick → corner detected
-BUG2_CLEAR_FWD         = 1.0    # m/s – forward speed during CLEAR (drive past object)
-BUG2_CLEAR_TIME        = 3.0    # s – how long to drive straight after corner
-
+# ── States ───────────────────────────────────────────────────────────────────
+S_DRIVE      = 'DRIVE'
+S_BRAKE      = 'BRAKE'
+S_TURN_CHECK = 'TURN_CHECK'
+S_TURN       = 'TURN'
+S_REVERSE    = 'REVERSE_TURN'
+S_BUG2       = 'BUG2_WALL'
+S_RETURN     = 'BUG2_RETURN'
+S_GO_HOME    = 'GO_HOME'
+S_DONE       = 'DONE'
+S_EMERGENCY  = 'EMERGENCY'
+S_CHARGE     = 'CHARGING'
 
 class AutoDrive(Node):
     def __init__(self):
         super().__init__('auto_drive')
-	
-        self.cmd_pub   = self.create_publisher(Twist,   '/cmd_vel',  10)
-        self.steer_pub = self.create_publisher(Float64, '/steering', 10)
-        self.create_subscription(LaserScan, '/scan', self.scan_cb, 10)
-        self.create_subscription(Odometry,  '/odom', self.odom_cb, 10)
-        self.create_subscription(TFMessage, '/world/pose_info', self.global_pose_cb, 10)
 
-        self.state            = STATE_DRIVE
-        self.lane_idx         = 0
-        self._turn_dir        = 1
-        self.avoid_side       = 1
+        # ── ROS parameters (set per robot via launch file) ───────
+        self.declare_parameter('spawn_gx', 22.5)
+        self.declare_parameter('spawn_gy', -28.5)
+        self.declare_parameter('spawn_yaw_deg', 90.0)
+
+        self.cmd_pub   = self.create_publisher(Twist,   'cmd_vel',  10)
+        self.steer_pub = self.create_publisher(Float64, 'steering', 10)
+        self.create_subscription(PointCloud2, 'scan/points', self._scan_cb, 10)
+        self.create_subscription(TFMessage, 'world/pose_info', self._pose_cb, 10)
+
+        # Emergency
+        self.emergency = False
+        self.create_subscription(
+            Float64, 'emergency_reset', self._emergency_reset_cb, 10)
+        
+        # Global pose (authoritative)
+        self.gx         = 0.0
+        self.gy         = 0.0
+        self.gyaw       = 0.0
+        self.pose_ready = False
+        
+        # State
+        self.state      = S_DRIVE
+        self.lane_gx    = None # target X for lane-keeping
+        self.lane_yaw   = None # current heading direction
+        self.sweep_dir  = 0 # +1 sweep right, -1 sweep left
+        self._turn_dir  = 1 # U-turn direction: +1=left, -1=right
+        self.avoid_side = 1 # preferred bug2 side based on LiDAR
+
+        # Boundary grace after U-turn
+        self.boundary_grace   = False # ignore OOB briefly after U-turn
+        self.turn_complete_gy = 0.0 # Y pos where last U-turn ended
+
+        # Battery
+        self.bat_pct  = 100.0
+        self.bat_gx   = 0.0 # last position for distance-based drain
+        self.bat_gy   = 0.0 # last position for distance-based drain
+        self.bat_init = False
+
+        # Spawn / Home
+        self.spawn_gx   = self.get_parameter('spawn_gx').value
+        self.spawn_gy   = self.get_parameter('spawn_gy').value
+        self.spawn_gyaw  = math.radians(self.get_parameter('spawn_yaw_deg').value)
+        self.going_home     = False
+        self.home_phase     = 'drive_to_entry' # initial GO_HOME phase
+        self.home_uturn_yaw = 0.0 # yaw at start of home U-turn
+        self.home_uturn_dir = 1 # home U-turn direction
+
+        # Timers
         self.brake_timer      = 0.0
         self.turn_check_timer = 0.0
+        self._log_t           = 0.0
 
-        self.yaw              = 0.0
-        self.yaw_start_turn   = 0.0
-        self.lane_yaw         = None   # heading of current lane
-        self.lane_y           = None   # target Y of current lane (avoidance return)
-        self.lane_gx          = None   # target global X of current lane (lane-keeping)
-        self.boundary_grace   = False  # skip boundary check after U-turn until clear
-        self.turn_complete_gy = 0.0    # global Y where last turn completed
+        # Stuck detection (shared helper)
+        self.stuck_timer    = 0.0
+        self.stuck_gx       = 0.0
+        self.stuck_gy       = 0.0
+        self.stuck_done     = False
+        self.yaw_start_turn = 0.0
+        self.rev_yaw_start  = 0.0
+        self.rev_dir        = 1
 
-        self.pos_x            = 0.0
-        self.pos_y            = 0.0
-        self.odom_ready       = False
+        # Global stuck recovery
+        self.gstuck_timer   = 0.0
+        self.gstuck_gx      = None
+        self.gstuck_gy      = None
+        self.gstuck_active  = False
+        self.gstuck_rev_t   = 0.0
+        self.gstuck_rev_dir = 1
+        self.gstuck_count   = 0
+        self.gstuck_area_gx = 0.0
+        self.gstuck_area_gy = 0.0
 
-        # Battery simulation
-        self.battery_pct      = 100.0  # percent remaining
-        self.battery_prev_gx  = 0.0    # previous global position for distance calc
-        self.battery_prev_gy  = 0.0
-        self.battery_init     = False  # first position captured?
+        # LiDAR distances
+        self.d_front        = 99.0
+        self.d_left         = 99.0
+        self.d_right        = 99.0
+        self.d_back         = 99.0
+        self.d_fright       = 99.0
+        self.d_fleft        = 99.0
+        self.obs_front      = False
+        self.obs_stop       = False
+        self.obs_back       = False
 
-        self.global_x         = 0.0
-        self.global_y         = 0.0
-        self.global_yaw       = 0.0
+        # Bug2
+        self.bug_timer       = 0.0
+        self.bug_side        = 1
+        self.hit_gx          = 0.0 # M-Line X where bug2 started
+        self.pre_bug_lane_gx = None  # saved lane_gx before bug2
+        self.bug_start_yaw   = 0.0 # yaw when bug2 started
 
-        # Stuck detection: remember position at start of turn
-        self.stuck_check_timer  = 0.0
-        self.stuck_ref_x        = 0.0
-        self.stuck_ref_y        = 0.0
-        self.stuck_checked      = False   # already checked in this TURN?
+        self._bug2_phase     = 'turn'
+        self._bug2_straight_gx   = 0.0
+        self._bug2_straight_gy   = 0.0
 
-        # Reverse turn state
-        self.reverse_yaw_start  = 0.0
-        self.reverse_dir        = 1      # +1=left, -1=right
+        self.create_timer(0.05, lambda: self._loop(0.05))
+        self.get_logger().info('AutoDrive ready')
 
-        self.dist_front       = 99.0
-        self.dist_left        = 99.0
-        self.dist_right       = 99.0
-        self.dist_back        = 99.0
-        self.dist_fright      = 99.0   # front-right für Bug2 Wall-Following
-        self.dist_fleft       = 99.0   # front-left für Bug2 Wall-Following
-        self.obstacle_front   = False
-        self.obstacle_stop    = False
-        self.obstacle_back    = False
-        self.wall_near        = False
-
-        # Bug2 Wall-Following state
-        self.bug2_wf_state      = BUG2_WF_TURN  # sub-state of wall follower
-        self.bug2_timer         = 0.0            # time in wall-following
-        self.bug2_follow_side   = 1              # +1 = wall right (dodge left)
-        self.bug2_hit_x         = 0.0            # position where obstacle was hit
-        self.bug2_hit_y         = 0.0
-        self.bug2_obs_dist      = 2.0            # measured obstacle distance at entry
-        self.bug2_start_yaw     = 0.0            # yaw at Bug2 start (for debug)
-        self.bug2_prev_d_wall   = 99.0           # d_wall_side from last tick (corner detection)
-        self.bug2_clear_timer   = 0.0            # time in CLEAR state
-        self.bug2_hit_gx        = 0.0            # GLOBAL position where obstacle was hit
-        self.bug2_hit_gy        = 0.0
-        self.bug2_stuck_timer   = 0.0            # stuck detection in Bug2
-        self.bug2_stuck_ref_x   = 0.0
-        self.bug2_stuck_ref_y   = 0.0
-        self.bug2_stuck_checked = False
-
-        self._log_timer       = 0.0
-
-        self.create_timer(0.05, lambda: self.loop(0.05))
-        self.get_logger().info('AutoDrive ready – waiting for sensors...')
-
-    # ── LiDAR ────────────────────────────────────────────────────────────────
-    def scan_cb(self, msg: LaserScan):
-        n_horiz   = 980
-        n_vert    = 32
-        total_pts = len(msg.ranges)
-
-        front_min  = 99.0
-        left_min   = 99.0
-        right_min  = 99.0
-        back_min   = 99.0
-        fright_min = 99.0
-        fleft_min  = 99.0
-
-        front_cone    = math.radians(FRONT_CONE)
-        side_start    = math.radians(SIDE_CONE_START)
-        side_end      = math.radians(SIDE_CONE_END)
-        back_thresh   = math.radians(180 - BACK_CONE)
-        fright_start  = math.radians(FRIGHT_CONE_START)
-        fright_end    = math.radians(FRIGHT_CONE_END)
-        fleft_start   = math.radians(FLEFT_CONE_START)
-        fleft_end     = math.radians(FLEFT_CONE_END)
-
-        def classify(r, angle):
-            nonlocal front_min, left_min, right_min, back_min, fright_min, fleft_min
-            if abs(angle) < front_cone:
-                front_min  = min(front_min, r)
-            elif fleft_start < angle < fleft_end:
-                fleft_min  = min(fleft_min, r)
-            elif -fright_end < angle < -fright_start:
-                fright_min = min(fright_min, r)
-            elif side_start < angle < side_end:
-                left_min   = min(left_min,  r)
-            elif -side_end < angle < -side_start:
-                right_min  = min(right_min, r)
-            elif abs(angle) > back_thresh:
-                back_min   = min(back_min,  r)
-
-        if total_pts == n_horiz * n_vert:
-            for v_idx in range(
-                max(0, LIDAR_HORIZ_IDX - LIDAR_HORIZ_TOL),
-                min(n_vert, LIDAR_HORIZ_IDX + LIDAR_HORIZ_TOL + 1)
-            ):
-                for h_idx in range(n_horiz):
-                    r = msg.ranges[v_idx * n_horiz + h_idx]
-                    if math.isnan(r) or math.isinf(r) or r <= 0.05:
-                        continue
-                    angle = msg.angle_min + h_idx * msg.angle_increment
-                    classify(r, angle)
-        else:
-            for i, r in enumerate(msg.ranges):
-                if math.isnan(r) or math.isinf(r) or r <= 0.05:
-                    continue
-                angle = msg.angle_min + i * msg.angle_increment
-                classify(r, angle)
-
-        self.dist_front  = front_min
-        self.dist_left   = left_min
-        self.dist_right  = right_min
-        self.dist_back   = back_min
-        self.dist_fright = fright_min
-        self.dist_fleft  = fleft_min
-
-        self.obstacle_stop  = front_min < OBSTACLE_STOP
-        self.obstacle_front = front_min < OBSTACLE_FRONT
-        self.obstacle_back  = back_min  < OBSTACLE_BACK
-        self.wall_near      = front_min < WALL_TURN_DIST
-
-        if left_min > right_min + 0.5:
-            self.avoid_side = 1
-        elif right_min > left_min + 0.5:
-            self.avoid_side = -1
-
-    # ── Odometry ──────────────────────────────────────────────────────────────
-    def odom_cb(self, msg: Odometry):
-        self.pos_x = msg.pose.pose.position.x
-        self.pos_y = msg.pose.pose.position.y
-        q = msg.pose.pose.orientation
-        _, _, self.yaw = tf_transformations.euler_from_quaternion(
-            [q.x, q.y, q.z, q.w])
-
-        if not self.odom_ready:
-            self.odom_ready = True
-            self.get_logger().info(
-                f'Start: x={self.pos_x:.1f} y={self.pos_y:.1f}  '
-                f'front={self.dist_front:.1f}m')
-
-    # ── Global Pose ──────────────────────────────────────────────────────────
-    def global_pose_cb(self, msg: TFMessage):
-      if len(msg.transforms) == 0:
-        return
-      t = msg.transforms[0]
-      p = t.transform.translation
-      r = t.transform.rotation
-      self.global_x = p.x
-      self.global_y = p.y
-      _, _, self.global_yaw = tf_transformations.euler_from_quaternion(
-          [r.x, r.y, r.z, r.w])
-
-    # ── Main Loop ────────────────────────────────────────────────────────────
-    def loop(self, dt: float):
-        if not self.odom_ready:
+    # ── Helpers ──────────────────────────────────────────────────────────────
+    def _pub(self, lin, ang, steer):
+        if self.emergency:
+            t = Twist()
+            self.cmd_pub.publish(t)
+            s = Float64()
+            s.data = 0.0
+            self.steer_pub.publish(s)
+            return
+        
+        # Speed limit check
+        if abs(lin) > MAX_SPEED_MPS:
+            self.emergency = True
+            self.state = S_EMERGENCY
+            self.get_logger().error(
+                f'EMERGENCY SHUTDOWN: speed {abs(lin):.2f} m/s > {MAX_SPEED_MPS} m/s limit! '
+                f'Publish 1.0 to /emergency_reset to restart.')
+            t = Twist()
+            self.cmd_pub.publish(t)
+            s = Float64()
+            s.data = 0.0
+            self.steer_pub.publish(s)
             return
 
-        # ── Battery simulation ───────────────────────────────────────────
-        if not self.battery_init:
-            self.battery_prev_gx = self.global_x
-            self.battery_prev_gy = self.global_y
-            self.battery_init = True
-        else:
-            dx = self.global_x - self.battery_prev_gx
-            dy = self.global_y - self.battery_prev_gy
-            dist_moved = math.hypot(dx, dy)
-            if dist_moved > 0.05:  # ignore tiny jitter
-                self.battery_pct -= dist_moved * 0.5  # 0.5% per meter
-                self.battery_prev_gx = self.global_x
-                self.battery_prev_gy = self.global_y
-
-        if self.battery_pct <= 0.0:
-            self.battery_pct = 0.0
-            self._publish(0.0, 0.0, 0.0)
-            if self.state != STATE_DONE:
-                self.state = STATE_DONE
-                self.get_logger().warning('BATTERY DEAD (0%) – robot stopped!')
-            return
-
-        # Periodic 360° sensor log every second
-        self._log_timer += dt
-        if self._log_timer >= 1.0:
-            self._log_timer = 0.0
-            self.get_logger().info(
-                f'[SCAN] V={self.dist_front:.1f}m  FL={self.dist_fleft:.1f}m  '
-                f'FR={self.dist_fright:.1f}m  L={self.dist_left:.1f}m  '
-                f'R={self.dist_right:.1f}m  H={self.dist_back:.1f}m  '
-                f'| state={self.state}  BAT={self.battery_pct:.1f}%  '
-                f'x={self.pos_x:.1f} y={self.pos_y:.1f}, '
-                f'x_global={self.global_x:.1f} y_global={self.global_y:.1f}')
-
-        # Emergency stop front (except turn states)
-        if self.obstacle_stop and self.state not in (
-                STATE_TURN, STATE_TURN_CHECK, STATE_REVERSE_TURN):
-            self._publish(0.0, 0.0, 0.0)
-            self.get_logger().warning(
-                f'EMERGENCY STOP FRONT! {self.dist_front:.2f}m',
-                throttle_duration_sec=1.0)
-            return
-
-        # Emergency stop rear only during reverse driving
-        if self.obstacle_back and self.state == STATE_REVERSE_TURN:
-            self._publish(0.0, 0.0, 0.0)
-            self.get_logger().warning(
-                f'EMERGENCY STOP REAR! {self.dist_back:.2f}m – aborting reverse')
-            # Still retry turn (forward)
-            self.yaw_start_turn    = self.yaw
-            self.stuck_check_timer = 0.0
-            self.stuck_checked     = False
-            self.stuck_ref_x       = self.pos_x
-            self.stuck_ref_y       = self.pos_y
-            self.state = STATE_TURN
-            return
-
-        # ── State Machine ─────────────────────────────────────────────────
-        out_of_bounds = (
-            self.global_x <= X_MIN_BOUNDARY or
-            self.global_x >= X_MAX_BOUNDARY or
-            self.global_y <= Y_MIN_BOUNDARY or
-            self.global_y >= Y_MAX_BOUNDARY
-        )
-        if self.state == STATE_DRIVE:
-            # Save lane yaw once on first step
-            if self.lane_yaw is None:
-                self.lane_yaw = self.yaw
-                self.lane_y   = self.pos_y
-                self.lane_gx  = self.global_x
-                self.get_logger().info(
-                    f'Lane yaw set: {math.degrees(self.lane_yaw):.1f}° lane_gx={self.lane_gx:.1f}')
-                
-            # Clear boundary grace once robot has moved 3m from where the turn ended
-            if self.boundary_grace:
-                dist_from_turn = abs(self.global_y - self.turn_complete_gy)
-                if dist_from_turn > 3.0:
-                    self.boundary_grace = False
-
-            # Boundary exceeded → end lane (but NOT if still in grace period after U-turn)
-            if out_of_bounds and not self.boundary_grace:
-                self._publish(0.0, 0.0, 0.0)
-                self.brake_timer = 0.0
-                self.state = STATE_BRAKE
-                self.get_logger().info(
-                    f'Boundary reached (y={self.global_y:.2f}m) – U-turn')
-                return
-
-            # Boundary exceeded → end lane like at wall (alternative)
-            #if out_of_bounds and self.wall_near:
-                #self._publish(0.0, 0.0, 0.0)
-                #self.brake_timer = 0.0
-                #self.state = STATE_BRAKE
-                #self.get_logger().info(
-                #f'Lane end at boundary (x={self.global_x:.1f}, y={self.global_y:.1f}) '
-                #f'Wall at {self.dist_front:.1f}m – braking (lane {self.lane_idx+1})')
-                #return
-
-            # Wall / lane end via LiDAR
-            #if self.wall_near:
-                #self._publish(0.0, 0.0, 0.0)
-                #self.brake_timer = 0.0
-                #self.state = STATE_BRAKE
-                #self.get_logger().info(
-                #    f'Wall at {self.dist_front:.1f}m – braking (lane {self.lane_idx+1})')
-                #return
-
-            # Obstacle (not lane end) → start Bug2 Wall-Following
-            if self.obstacle_front:
-                self._publish(0.0, 0.0, 0.0)
-                self.bug2_timer         = 0.0
-                self.bug2_hit_x         = self.pos_x
-                self.bug2_hit_y         = self.pos_y
-                self.bug2_obs_dist      = self.dist_front  # remember obstacle distance
-                self.bug2_start_yaw     = self.yaw         # remember yaw at start
-                self.bug2_prev_d_wall   = self.dist_front  # for corner detection
-                self.bug2_clear_timer   = 0.0
-                self.bug2_hit_gx        = self.global_x    # save GLOBAL hit position
-                self.bug2_hit_gy        = self.global_y
-                self.bug2_stuck_timer   = 0.0
-                self.bug2_stuck_ref_x   = self.pos_x
-                self.bug2_stuck_ref_y   = self.pos_y
-                self.bug2_stuck_checked = False
-                self.lane_y             = self.pos_y
-                self.bug2_follow_side   = self.avoid_side
-                self.bug2_wf_state      = BUG2_WF_TURN
-                self.state = STATE_AVOID
-                side = 'left' if self.bug2_follow_side == 1 else 'right'
-                wall_thresh = self.dist_front + BUG2_WALL_LOST_MARGIN
-                self.get_logger().info(
-                    f'Bug2: START obstacle {self.dist_front:.1f}m → Wall-Following {side} '
-                    f'(lane_yaw={math.degrees(self.lane_yaw):.1f}°) '
-                    f'| obs_dist={self.bug2_obs_dist:.1f}m '
-                    f'wall_lost_thresh={wall_thresh:.1f}m '
-                    f'| V={self.dist_front:.1f}m FL={self.dist_fleft:.1f}m '
-                    f'FR={self.dist_fright:.1f}m L={self.dist_left:.1f}m '
-                    f'R={self.dist_right:.1f}m '
-                    f'| pos=({self.pos_x:.1f},{self.pos_y:.1f}) '
-                    f'global=({self.global_x:.1f},{self.global_y:.1f})')
-                return
-
-            # Lane-keeping: steer toward a point on lane_gx, 5m ahead in current heading
-            # Uses atan2 so the sign is always correct regardless of heading direction
-            if self.lane_gx is not None:
-                target_gx = self.lane_gx
-                target_gy = self.global_y + 5.0 * math.sin(self.global_yaw)
-                desired_yaw = math.atan2(
-                    target_gy - self.global_y,
-                    target_gx - self.global_x
-                )
-                steer_err = self._angle_diff(desired_yaw, self.global_yaw)
-                lane_corr = max(-0.4, min(0.4, steer_err * DRIVE_LANE_KP))
-                lane_steer = max(-MAX_STEER * 0.5, min(MAX_STEER * 0.5, steer_err * DRIVE_LANE_KP))
-                self._publish(DRIVE_SPEED, lane_corr, lane_steer)
-            else:
-                self._publish(DRIVE_SPEED, 0.0, 0.0)
-
-        elif self.state == STATE_BRAKE:
-            self.brake_timer += dt
-            self._publish(0.0, 0.0, 0.0)
-            if self.brake_timer > 0.4:
-                self.turn_check_timer = 0.0
-                self.state = STATE_TURN_CHECK
-
-        elif self.state == STATE_TURN_CHECK:
-            self.turn_check_timer += dt
-            self._publish(0.0, 0.0, 0.0)
-
-            links_ok  = self.dist_left  > SIDE_MIN_DIST
-            rechts_ok = self.dist_right > SIDE_MIN_DIST
-
-            if links_ok or rechts_ok:
-                self._turn_dir = 1 if self.dist_left >= self.dist_right else -1
-                self.yaw_start_turn    = self.yaw
-                self.stuck_check_timer = 0.0
-                self.stuck_checked     = False
-                self.stuck_ref_x       = self.pos_x
-                self.stuck_ref_y       = self.pos_y
-                self.state = STATE_TURN
-                side = 'left' if self._turn_dir == 1 else 'right'
-                self.get_logger().info(
-                    f'U-turn {side} (L={self.dist_left:.1f}m R={self.dist_right:.1f}m)')
-            elif self.turn_check_timer > 5.0:
-                self.get_logger().warning('No turn space – reversing')
-                self._publish(-0.15, 0.0, 0.0)
-
-        elif self.state == STATE_TURN:
-            turned = abs(self._angle_diff(self.yaw, self.yaw_start_turn))
-
-            # Stuck detection: after STUCK_CHECK_TIME seconds check if
-            # the robot has actually moved
-            self.stuck_check_timer += dt
-            if not self.stuck_checked and self.stuck_check_timer >= STUCK_CHECK_TIME:
-                self.stuck_checked = True
-                dist_moved = math.hypot(
-                    self.pos_x - self.stuck_ref_x,
-                    self.pos_y - self.stuck_ref_y
-                )
-                if dist_moved < STUCK_DIST_M:
-                    # Stuck – initiate reverse turn maneuver
-                    self.get_logger().warning(
-                        f'STUCK detected (moved={dist_moved:.2f}m in {STUCK_CHECK_TIME}s) '
-                        f'– reverse + 90 degree turn')
-                    self.reverse_yaw_start = self.yaw
-                    # Reverse direction opposite to turn side
-                    self.reverse_dir = -self._turn_dir
-                    self._publish(0.0, 0.0, 0.0)
-                    self.state = STATE_REVERSE_TURN
-                    return
-
-            if turned < math.pi - 0.10:
-                self._publish(
-                    TURN_FORWARD_SPD,
-                    TURN_SPEED * self._turn_dir,
-                    MAX_STEER * self._turn_dir
-                )
-            else:
-                # Turn complete – save new lane yaw, offset lane_gx for next lane
-                self._publish(0.0, 0.0, 0.0)
-                self.lane_yaw = self.yaw
-                self.lane_y   = self.pos_y   # new lane Y after turn
-                self.boundary_grace = True
-                self.turn_complete_gy = self.global_y
-                # Offset lane_gx: robot always sweeps in -X global direction
-                # (from right room wall toward left room wall)
-                old_gx = self.lane_gx if self.lane_gx is not None else self.global_x
-                self.lane_gx = old_gx - LANE_OFFSET
-                self.lane_idx += 1
-                if self.lane_idx >= NUM_LANES:
-                    self.state = STATE_DONE
-                    self.get_logger().info('Done – all lanes completed!')
-                else:
-                    self.state = STATE_DRIVE
-                    self.get_logger().info(
-                        f'Lane {self.lane_idx+1} – Yaw={math.degrees(self.lane_yaw):.1f}° '
-                        f'lane_gx={self.lane_gx:.1f} (offset from {old_gx:.1f})')
-
-        elif self.state == STATE_REVERSE_TURN:
-            # Reverse drive while turning 90 degrees
-            turned_back = abs(self._angle_diff(self.yaw, self.reverse_yaw_start))
-            target_rad  = math.radians(REVERSE_YAW_DEG)
-
-            if turned_back < target_rad - 0.08:
-                self._publish(
-                    REVERSE_SPEED,
-                    TURN_SPEED * self.reverse_dir,
-                    REVERSE_STEER * self.reverse_dir
-                )
-            else:
-                # 90 degrees reached – restart normal turn attempt
-                self._publish(0.0, 0.0, 0.0)
-                self.get_logger().info(
-                    f'Reverse turn complete – restarting turn')
-                # Reset turn parameters for new attempt
-                self.yaw_start_turn    = self.yaw
-                self.stuck_check_timer = 0.0
-                self.stuck_checked     = False
-                self.stuck_ref_x       = self.pos_x
-                self.stuck_ref_y       = self.pos_y
-                self.state = STATE_TURN
-
-        elif self.state == STATE_AVOID:
-            # ── Bug2 Wall-Following ──────────────────────────────────────
-            self.bug2_timer += dt
-            s = self.bug2_follow_side   # +1=dodge left (wall right), -1=dodge right
-
-            # Sensor regions (mirrored depending on follow side)
-            # d_wall_diag = front-diagonal (25-55°) → sees front face at an angle
-            # d_wall_side = true side (55-125°) → sees actual side wall
-            if s == 1:
-                d_wall_diag = self.dist_fright
-                d_wall_side = self.dist_right
-            else:
-                d_wall_diag = self.dist_fleft
-                d_wall_side = self.dist_left
-
-            d_wall = min(d_wall_diag, d_wall_side)
-            d_front = self.dist_front
-            d_nearest = min(d_front, self.dist_fright, self.dist_fleft,
-                           self.dist_right, self.dist_left)
-
-            # ── Dynamic thresholds ───────────────────────────────────────
-            follow_range     = self.bug2_obs_dist + 1.0
-            wall_lost_thresh = self.bug2_obs_dist + BUG2_WALL_LOST_MARGIN
-
-            # ── Corner detection ─────────────────────────────────────────
-            # Corner = d_wall_side suddenly jumps (object edge passed)
-            # → Don't turn toward wall! Instead: drive STRAIGHT to clear object
-            d_side_jump = d_wall_side - self.bug2_prev_d_wall
-            corner_detected = (
-                d_side_jump > BUG2_CORNER_JUMP and
-                self.bug2_prev_d_wall < follow_range and
-                self.bug2_wf_state == BUG2_WF_FOLLOW and
-                d_front > BUG2_FRONT_DIST and
-                self.bug2_timer > 3.0
-            )
-
-            # ── Wall-Following sub-state machine ─────────────────────────
-            prev_wf_state = self.bug2_wf_state
-
-            # --- Priority 1: Corner detected → drive straight to clear object
-            if corner_detected:
-                self.bug2_wf_state = BUG2_WF_CLEAR
-                self.bug2_clear_timer = 0.0
-                self.get_logger().info(
-                    f'Bug2 WF: *** CORNER → CLEAR *** '
-                    f'd_wall_side jumped {self.bug2_prev_d_wall:.2f}→{d_wall_side:.2f}m '
-                    f'(+{d_side_jump:.2f}m) → driving straight to clear object')
-
-            # --- Priority 2: Already in CLEAR → drive straight, then RETURN
-            elif self.bug2_wf_state == BUG2_WF_CLEAR:
-                self.bug2_clear_timer += dt
-                if d_front < BUG2_FRONT_DIST or self.obstacle_front:
-                    # Front blocked during CLEAR → must TURN
-                    self.bug2_wf_state = BUG2_WF_TURN
-                    self.get_logger().info(
-                        f'Bug2 WF: *** CLEAR → TURN *** '
-                        f'Front blocked {d_front:.1f}m during clear')
-                elif d_wall_side < follow_range and self.bug2_clear_timer > 1.0:
-                    # Found next wall face after some clearing → FOLLOW
-                    self.bug2_wf_state = BUG2_WF_FOLLOW
-                    self.get_logger().info(
-                        f'Bug2 WF: *** CLEAR → FOLLOW *** '
-                        f'Next wall found d_side={d_wall_side:.2f}m after '
-                        f'{self.bug2_clear_timer:.1f}s')
-                elif self.bug2_clear_timer > BUG2_CLEAR_TIME:
-                    # Cleared the object → go directly to RETURN
-                    self._publish(0.0, 0.0, 0.0)
-                    self.state = STATE_BUG2_RETURN
-                    self.bug2_prev_d_wall = d_wall_side
-                    self.get_logger().info(
-                        f'Bug2: CLEAR complete ({self.bug2_clear_timer:.1f}s) '
-                        f'd_nearest={d_nearest:.1f}m → RETURN to M-Line '
-                        f'(global target=({self.bug2_hit_gx:.1f},{self.bug2_hit_gy:.1f}))')
-                    return
-
-            # --- Priority 3: Front or diagonal blocked → TURN
-            elif (d_front < BUG2_FRONT_DIST or self.obstacle_front or
-                  d_wall_diag < follow_range):
-                self.bug2_wf_state = BUG2_WF_TURN
-                if d_front < self.bug2_obs_dist:
-                    self.bug2_obs_dist = d_front
-                    follow_range = self.bug2_obs_dist + 1.0
-                    wall_lost_thresh = self.bug2_obs_dist + BUG2_WALL_LOST_MARGIN
-                if d_wall_diag < self.bug2_obs_dist:
-                    self.bug2_obs_dist = d_wall_diag
-                    follow_range = self.bug2_obs_dist + 1.0
-                    wall_lost_thresh = self.bug2_obs_dist + BUG2_WALL_LOST_MARGIN
-
-            # --- Priority 4: Side sensor sees wall → FOLLOW
-            elif d_wall_side < follow_range:
-                self.bug2_wf_state = BUG2_WF_FOLLOW
-                if d_wall_side < self.bug2_obs_dist:
-                    self.bug2_obs_dist = d_wall_side
-                    follow_range = self.bug2_obs_dist + 1.0
-                    wall_lost_thresh = self.bug2_obs_dist + BUG2_WALL_LOST_MARGIN
-
-            # --- Priority 5: Side in transition zone → FOLLOW
-            elif d_wall_side < wall_lost_thresh:
-                self.bug2_wf_state = BUG2_WF_FOLLOW
-                if self._log_timer == 0.0:
-                    self.get_logger().info(
-                        f'Bug2 WF: Side in transition → FOLLOW '
-                        f'd_side={d_wall_side:.2f}m (follow={follow_range:.1f}m '
-                        f'lost={wall_lost_thresh:.1f}m)')
-
-            # --- Priority 6: Everything far → safety check before RETURN
-            else:
-                safe_to_return = True
-                block_reason = ""
-                if self.bug2_timer < BUG2_MIN_TURN_TIME:
-                    safe_to_return = False
-                    block_reason = f"too early (t={self.bug2_timer:.1f}s)"
-                if d_nearest < BUG2_SAFE_RETURN_DIST:
-                    safe_to_return = False
-                    block_reason = (f"obstacle near d_nearest={d_nearest:.2f}m")
-
-                if safe_to_return:
-                    self._publish(0.0, 0.0, 0.0)
-                    self.state = STATE_BUG2_RETURN
-                    self.bug2_prev_d_wall = d_wall_side
-                    self.get_logger().info(
-                        f'Bug2: Wall lost (d_side={d_wall_side:.1f}m > '
-                        f'lost={wall_lost_thresh:.1f}m) '
-                        f'after {self.bug2_timer:.1f}s → RETURN')
-                    return
-                else:
-                    self.bug2_wf_state = BUG2_WF_TURN
-                    if self._log_timer == 0.0:
-                        self.get_logger().warning(
-                            f'Bug2 WF: RETURN BLOCKED: {block_reason} → keep TURN')
-
-            # Log on sub-state change
-            if self.bug2_wf_state != prev_wf_state:
-                wf_names = {BUG2_WF_TURN: 'TURN', BUG2_WF_FOLLOW: 'FOLLOW',
-                            BUG2_WF_CLEAR: 'CLEAR'}
-                self.get_logger().info(
-                    f'Bug2 WF: *** SWITCH {wf_names.get(prev_wf_state, "?")} → '
-                    f'{wf_names.get(self.bug2_wf_state, "?")} *** '
-                    f'(front={d_front:.1f}m diag={d_wall_diag:.1f}m '
-                    f'side={d_wall_side:.1f}m '
-                    f'follow={follow_range:.1f}m obs_ref={self.bug2_obs_dist:.1f}m)')
-
-            # Save d_wall_side for next tick (corner detection)
-            self.bug2_prev_d_wall = d_wall_side
-
-            # ── Compute velocities ───────────────────────────────────────
-            if self.bug2_wf_state == BUG2_WF_TURN:
-                # Turn AWAY from wall
-                self._publish(
-                    BUG2_TURN_FWD,
-                    BUG2_TURN_ANG * s,
-                    MAX_STEER * s
-                )
-            elif self.bug2_wf_state == BUG2_WF_CLEAR:
-                # Drive STRAIGHT to clear the object (no turning!)
-                self._publish(BUG2_CLEAR_FWD, 0.0, 0.0)
-            elif self.bug2_wf_state == BUG2_WF_FOLLOW:
-                # P-controller: maintain target distance to side wall
-                error = BUG2_FOLLOW_TARGET - d_wall_side
-                correction = max(-0.5, min(0.5, error * BUG2_FOLLOW_KP * s))
-                steer_corr = max(-MAX_STEER, min(MAX_STEER, error * BUG2_FOLLOW_KP * s))
-                self._publish(
-                    BUG2_FOLLOW_WALL_LIN,
-                    correction,
-                    steer_corr
-                )
-
-            # ── M-Line reached during Follow? ────────────────────────────
-            dist_to_line = self._distance_to_lane_line()
-            if self.bug2_timer > BUG2_MIN_FOLLOW_TIME and \
-               dist_to_line < BUG2_LINE_TOL and \
-               not self.obstacle_front:
-                self._publish(0.0, 0.0, 0.0)
-                self.get_logger().info(
-                    f'Bug2: M-Line reached (dist={dist_to_line:.2f}m, '
-                    f't={self.bug2_timer:.1f}s) → DRIVE')
-                self.state = STATE_DRIVE
-                return
-
-            # ── Bug2 Timeout ─────────────────────────────────────────────
-            if self.bug2_timer > BUG2_TIMEOUT:
-                self._publish(0.0, 0.0, 0.0)
-                self.get_logger().warning(
-                    f'Bug2: TIMEOUT after {self.bug2_timer:.1f}s → DRIVE')
-                self.state = STATE_DRIVE
-                return
-
-            # ── Bug2 Stuck detection ─────────────────────────────────────
-            self.bug2_stuck_timer += dt
-            if not self.bug2_stuck_checked and \
-               self.bug2_stuck_timer >= BUG2_STUCK_TIME:
-                self.bug2_stuck_checked = True
-                dist_moved = math.hypot(
-                    self.pos_x - self.bug2_stuck_ref_x,
-                    self.pos_y - self.bug2_stuck_ref_y
-                )
-                if dist_moved < BUG2_STUCK_DIST:
-                    self.bug2_follow_side = -self.bug2_follow_side
-                    self.bug2_wf_state    = BUG2_WF_TURN
-                    self.bug2_stuck_timer   = 0.0
-                    self.bug2_stuck_ref_x   = self.pos_x
-                    self.bug2_stuck_ref_y   = self.pos_y
-                    self.bug2_stuck_checked = False
-                    side = 'left' if self.bug2_follow_side == 1 else 'right'
-                    self.get_logger().warning(
-                        f'Bug2: STUCK ({dist_moved:.2f}m in {BUG2_STUCK_TIME}s) '
-                        f'→ switch side to {side}')
-                else:
-                    self.bug2_stuck_timer   = 0.0
-                    self.bug2_stuck_ref_x   = self.pos_x
-                    self.bug2_stuck_ref_y   = self.pos_y
-                    self.bug2_stuck_checked = False
-
-            # Periodic debug log
-            if self._log_timer == 0.0:
-                wf_names = {BUG2_WF_TURN: 'TURN', BUG2_WF_FOLLOW: 'FOLLOW',
-                            BUG2_WF_CLEAR: 'CLEAR'}
-                side_name = 'right' if s == 1 else 'left'
-                yaw_turned = math.degrees(abs(self._angle_diff(self.yaw, self.bug2_start_yaw)))
-                clear_info = (f' clear_t={self.bug2_clear_timer:.1f}s'
-                              if self.bug2_wf_state == BUG2_WF_CLEAR else '')
-                self.get_logger().info(
-                    f'Bug2 WF: {wf_names.get(self.bug2_wf_state, "?")} '
-                    f'wall_side={side_name} turned={yaw_turned:.0f}° '
-                    f'dist_line={self._distance_to_lane_line():.2f}m t={self.bug2_timer:.1f}s '
-                    f'| V={d_front:.1f}m FL={self.dist_fleft:.1f}m '
-                    f'FR={self.dist_fright:.1f}m L={self.dist_left:.1f}m '
-                    f'R={self.dist_right:.1f}m '
-                    f'| diag={d_wall_diag:.2f}m side={d_wall_side:.2f}m '
-                    f'd_nearest={d_nearest:.2f}m '
-                    f'| obs_ref={self.bug2_obs_dist:.1f}m '
-                    f'follow={follow_range:.1f}m '
-                    f'lost={wall_lost_thresh:.1f}m{clear_info} '
-                    f'| global=({self.global_x:.1f},{self.global_y:.1f}) '
-                    f'global_yaw={math.degrees(self.global_yaw):.1f}°')
-
-        elif self.state == STATE_BUG2_RETURN:
-            # ── Return to M-Line using GLOBAL coordinates ────────────────
-            # Navigate toward the global hit point (where Bug2 started)
-            # This avoids odometry drift issues with yaw
-            d_nearest_return = min(self.dist_front, self.dist_fright, self.dist_fleft,
-                                   self.dist_right, self.dist_left)
-
-            # Only re-enter wall-following if something blocks the FRONT path
-            # Side walls (room boundaries) are NOT obstacles during return!
-            if self.obstacle_front:
-                self.bug2_wf_state      = BUG2_WF_TURN
-                self.bug2_obs_dist      = self.dist_front
-                self.bug2_stuck_timer   = 0.0
-                self.bug2_stuck_ref_x   = self.pos_x
-                self.bug2_stuck_ref_y   = self.pos_y
-                self.bug2_stuck_checked = False
-                self.state = STATE_AVOID
-                self.get_logger().info(
-                    f'Bug2 RETURN: Front obstacle! front={self.dist_front:.1f}m '
-                    f'→ back to wall-following')
-                return
-
-            # Compute M-Line distance using GLOBAL coordinates
-            dist_to_mline = self._distance_to_mline_global()
-
-            # Target: a point FAR ahead on the M-Line
-            # Large lookahead = gentle diagonal approach instead of hard turn
-            # M-Line is at x=hit_gx, going in +Y direction
-            target_gx = self.bug2_hit_gx
-            target_gy = self.global_y + BUG2_RETURN_LOOKAHEAD  # always 10m ahead
-
-            desired_yaw_g = math.atan2(
-                target_gy - self.global_y,
-                target_gx - self.global_x
-            )
-            steer_err = self._angle_diff(desired_yaw_g, self.global_yaw)
-            steer_err_deg = abs(math.degrees(steer_err))
-
-            # Goal reached: close to M-Line and heading roughly in +Y
-            # Check heading toward +Y (90°) instead of toward target
-            heading_err_deg = abs(math.degrees(
-                self._angle_diff(math.radians(90.0), self.global_yaw)))
-            if dist_to_mline < BUG2_LINE_TOL and heading_err_deg < BUG2_RETURN_YAW_TOL:
-                self._publish(0.0, 0.0, 0.0)
-                self.lane_gx = self.global_x  # update lane X after Bug2
-                self.get_logger().info(
-                    f'Bug2 RETURN: M-Line reached '
-                    f'(dist={dist_to_mline:.2f}m, heading_err={heading_err_deg:.1f}°) '
-                    f'lane_gx={self.lane_gx:.1f} → DRIVE')
-                self.state = STATE_DRIVE
-                return
-
-            # P-controller: strong KP, full steer range
-            corr  = max(-0.5, min(0.5, steer_err * BUG2_RETURN_KP))
-            steer = max(-MAX_STEER, min(MAX_STEER, steer_err * BUG2_RETURN_KP))
-            self._publish(BUG2_RETURN_SPEED, corr, steer)
-
-            # Periodic log
-            if self._log_timer == 0.0:
-                self.get_logger().info(
-                    f'Bug2 RETURN: dist_mline={dist_to_mline:.2f}m '
-                    f'steer_err={math.degrees(steer_err):.1f}° '
-                    f'heading_err={heading_err_deg:.1f}° '
-                    f'corr={corr:.2f} steer={steer:.2f} '
-                    f'| V={self.dist_front:.1f}m d_nearest={d_nearest_return:.1f}m '
-                    f'| target_g=({target_gx:.1f},{target_gy:.1f}) '
-                    f'pos_g=({self.global_x:.1f},{self.global_y:.1f}) '
-                    f'| global_yaw={math.degrees(self.global_yaw):.1f}°')
-
-        elif self.state == STATE_DONE:
-            self._publish(0.0, 0.0, 0.0)
-
-    # ── Helper functions ─────────────────────────────────────────────────────
-    def _distance_to_lane_line(self):
-        """Perpendicular distance from current position to lane line (M-Line).
-        The line passes through (bug2_hit_x, bug2_hit_y) in direction lane_yaw."""
-        if self.lane_yaw is None:
-            return 99.0
-        dx = self.pos_x - self.bug2_hit_x
-        dy = self.pos_y - self.bug2_hit_y
-        return abs(math.sin(self.lane_yaw) * dx - math.cos(self.lane_yaw) * dy)
-
-    def _distance_to_mline_global(self):
-        """Perpendicular distance from current GLOBAL position to M-Line.
-        M-Line passes through (bug2_hit_gx, bug2_hit_gy) in +Y direction (global).
-        Since the robot drives in +Y global, M-Line is a vertical line at x=hit_gx."""
-        return abs(self.global_x - self.bug2_hit_gx)
-
-    def _publish(self, linear: float, angular: float, steer: float):
         t = Twist()
-        t.linear.x  = linear
-        t.angular.z = angular
+        t.linear.x = float(lin)
+        t.angular.z = float(ang)
         self.cmd_pub.publish(t)
-
         s = Float64()
-        s.data = max(-0.5, min(0.5, steer))
+        s.data = max(-0.5, min(0.5, float(steer)))
         self.steer_pub.publish(s)
 
     @staticmethod
-    def _angle_diff(a, b):
+    def _adiff(a, b):
         d = a - b
-        while d >  math.pi: d -= 2 * math.pi
-        while d < -math.pi: d += 2 * math.pi
+
+        while d > math.pi:
+            d -= 2*math.pi
+
+        while d < -math.pi:
+             d += 2*math.pi
+
         return d
 
+    def _clamp(self, v, lo, hi):
+        return max(lo, min(hi, v))
+
+    def _oob(self):
+        in_main   = (X_MIN <= self.gx <= X_MAX and Y_MIN <= self.gy <= Y_MAX)
+        in_garage = (GARAGE_X_MIN <= self.gx <= GARAGE_X_MAX
+                    and GARAGE_Y_MIN <= self.gy <= GARAGE_Y_MAX)
+        return not (in_main or in_garage)
+    
+    def _in_charge_zone(self):
+        return math.hypot(self.gx - self.spawn_gx, self.gy - self.spawn_gy) < CHARGE_ZONE_RADIUS
+
+    def _reset_stuck(self):
+        self.stuck_timer = 0.0
+        self.stuck_gx    = self.gx
+        self.stuck_gy    = self.gy
+        self.stuck_done  = False
+
+    def _reset_gstuck(self):
+        self.gstuck_timer = 0.0
+        self.gstuck_gx    = self.gx
+        self.gstuck_gy    = self.gy
+
+    def _heading_is_positive_y(self):
+        return abs(self._adiff(self.gyaw, math.pi/2)) < math.pi/2
+
+    # ── Callbacks ────────────────────────────────────────────────────────────
+    def _emergency_reset_cb(self, msg):
+        if msg.data == 1.0 and self.emergency:
+            self.emergency = False
+            self.state = S_DRIVE
+            self.get_logger().warning('EMERGENCY RESET by operator → DRIVE')
+
+    def _scan_cb(self, msg: PointCloud2):
+        fm = lm = rm = bm = frm = flm = 99.0
+        fc = math.radians(FRONT_CONE)
+        ss = math.radians(SIDE_CONE_START)
+        se = math.radians(SIDE_CONE_END)
+        bt = math.radians(180 - BACK_CONE)
+        ds = math.radians(FDIAG_START)
+        de = math.radians(FDIAG_END)
+
+        if not hasattr(self, '_pc_offsets'):
+            self._pc_offsets = {}
+            for f in msg.fields:
+                self._pc_offsets[f.name] = f.offset
+            self._pc_step = msg.point_step
+
+        ox   = self._pc_offsets.get('x', 0)
+        oy   = self._pc_offsets.get('y', 4)
+        oz   = self._pc_offsets.get('z', 8)
+        step = self._pc_step
+        data = msg.data
+
+        for i in range(0, len(data), step):
+            if i + oz + 4 > len(data):
+                break
+            x = struct.unpack_from('f', data, i + ox)[0]
+            y = struct.unpack_from('f', data, i + oy)[0]
+            z = struct.unpack_from('f', data, i + oz)[0]
+
+            r_horiz = math.sqrt(x * x + y * y)
+
+            if r_horiz < 0.05:
+                continue
+            if z < -1.85:
+                continue
+            if z > 0.3:
+                continue
+
+            h_angle = math.atan2(y, x)
+
+            if abs(h_angle) < fc:
+                fm = min(fm, r_horiz)
+            elif ds < h_angle < de:
+                flm = min(flm, r_horiz)
+            elif -de < h_angle < -ds:
+                frm = min(frm, r_horiz)
+            elif ss < h_angle < se:
+                lm = min(lm, r_horiz)
+            elif -se < h_angle < -ss:
+                rm = min(rm, r_horiz)
+            elif abs(h_angle) > bt:
+                bm = min(bm, r_horiz)
+
+        self.d_front        = fm
+        self.d_left         = lm
+        self.d_right        = rm
+        self.d_back         = bm
+        self.d_fright       = frm
+        self.d_fleft        = flm
+        self.obs_stop       = fm < OBSTACLE_STOP
+        self.obs_front      = fm < OBSTACLE_FRONT
+        self.obs_back       = bm < OBSTACLE_BACK
+
+        if self._in_charge_zone():
+            self.obs_front      = False
+            self.obs_stop       = False
+            self.obs_back       = False
+
+        if lm > rm + 0.5:
+            self.avoid_side = 1
+        elif rm > lm + 0.5:
+            self.avoid_side = -1
+
+    def _pose_cb(self, msg: TFMessage):
+        if not msg.transforms:
+            return
+        p = msg.transforms[0].transform.translation
+        r = msg.transforms[0].transform.rotation
+        self.gx = p.x
+        self.gy = p.y
+        _, _, self.gyaw = tf_transformations.euler_from_quaternion([r.x, r.y, r.z, r.w])
+        if not self.pose_ready:
+            self.pose_ready = True
+            self.get_logger().info(f'Pose ready g=({self.gx:.1f},{self.gy:.1f})')
+
+    # ── Main Loop ────────────────────────────────────────────────────────────
+    def _loop(self, dt):
+        if not self.pose_ready:
+            return
+        if self.emergency:
+            self._pub(0, 0, 0)
+            return
+
+        if not self.bat_init:
+            self.bat_gx   = self.gx
+            self.bat_gy   = self.gy
+            self.bat_init = True
+            self.get_logger().info(
+                f'Home station at ({self.spawn_gx:.1f}, {self.spawn_gy:.1f}) yaw={math.degrees(self.spawn_gyaw):.1f}°')
+        else:
+            d = math.hypot(self.gx - self.bat_gx, self.gy - self.bat_gy)
+            if d > 0.05 and self.state != S_CHARGE:
+                self.bat_pct -= d * 0.5
+                self.bat_gx   = self.gx
+                self.bat_gy   = self.gy
+
+        if self.bat_init and self.state != S_CHARGE:
+            self.bat_pct -= 0.01 * dt
+
+        if self.bat_pct <= 0:
+            self.bat_pct = 0
+            self._pub(0, 0, 0)
+            if self.state != S_DONE:
+                self.state = S_DONE
+                self.get_logger().warning('BATTERY DEAD – stopped!')
+            return
+
+        if self.bat_pct < BAT_LOW_PCT and self.state not in (S_GO_HOME, S_DONE, S_CHARGE):
+            if self.going_home and self.state in (S_BUG2, S_RETURN):
+                pass
+            else:
+                self.going_home = True
+                self.home_phase = 'drive_to_entry'
+                self._pub(0, 0, 0)
+                prev = self.state
+                self.state = S_GO_HOME
+                dist = math.hypot(self.gx - self.spawn_gx, self.gy - self.spawn_gy)
+                self.get_logger().warning(
+                    f'LOW BATTERY {self.bat_pct:.1f}% – heading home '
+                    f'from {prev} ({self.spawn_gx:.1f}, {self.spawn_gy:.1f}), dist={dist:.1f}m')
+                return
+
+        self._log_t += dt
+        if self._log_t >= 1.0:
+            self._log_t = 0.0
+            self.get_logger().info(
+                f'[SCAN] F={self.d_front:.1f}m FL={self.d_fleft:.1f}m FR={self.d_fright:.1f}m '
+                f'L={self.d_left:.1f}m R={self.d_right:.1f}m B={self.d_back:.1f}m '
+                f'| STATE={self.state} BAT={self.bat_pct:.1f}% gx={self.gx:.1f} gy={self.gy:.1f}')
+
+        if self.obs_stop and self.state not in (S_TURN, S_TURN_CHECK, S_REVERSE, S_CHARGE):
+            self._pub(0, 0, 0)
+            self.get_logger().warning(f'E-STOP FRONT {self.d_front:.2f}m', throttle_duration_sec=1.0)
+            return
+        
+        if self.obs_back and self.state == S_REVERSE:
+            self._pub(0, 0, 0)
+            self.yaw_start_turn = self.gyaw
+            self._reset_stuck()
+            self.state = S_TURN
+            return
+        
+        # ── GLOBAL STUCK RECOVERY (runs in every state) ──────────────
+        if self.gstuck_active:
+            self.gstuck_rev_t += dt
+            self._pub(GLOBAL_REV_SPEED, 0.4 * self.gstuck_rev_dir,
+                      GLOBAL_REV_STEER * self.gstuck_rev_dir)
+            if self.gstuck_rev_t  >= GLOBAL_REV_TIME:
+                self.gstuck_active = False
+                self.gstuck_timer  = 0.0
+                self.gstuck_gx     = self.gx
+                self.gstuck_gy     = self.gy
+                self._pub(0, 0, 0)
+
+                if math.hypot(self.gx - self.gstuck_area_gx,
+                              self.gy - self.gstuck_area_gy) < 2.0:
+                    self.gstuck_count  += 1
+                else:
+                    self.gstuck_count   = 1
+                    self.gstuck_area_gx = self.gx
+                    self.gstuck_area_gy = self.gy
+
+                if self.gstuck_count >= 3:
+                    self.gstuck_count = 0
+                    if self.going_home:
+                        self.state = S_GO_HOME
+                        self.home_phase = 'drive_to_entry'
+                        self.get_logger().warning(
+                            f'GLOBAL STUCK x3 → force GO_HOME turn')
+                    else:
+                        self._start_bug2()
+                        self.get_logger().warning(
+                            f'GLOBAL STUCK x3 → force Bug2 escape')
+                else:
+                    self.get_logger().warning(
+                        f'GLOBAL STUCK recovery done ({self.gstuck_count}/3) → resume')
+            return
+
+        if self.gstuck_gx is None:
+            self.gstuck_gx = self.gx
+            self.gstuck_gy = self.gy
+
+        self.gstuck_timer += dt
+
+        if self.gstuck_timer >= GLOBAL_STUCK_TIME:
+            moved = math.hypot(self.gx - self.gstuck_gx, self.gy - self.gstuck_gy)
+            if moved < GLOBAL_STUCK_DIST:
+                self.gstuck_active  = True
+                self.gstuck_rev_t   = 0.0
+                self.gstuck_rev_dir = 1 if self.d_left > self.d_right else -1
+                self.get_logger().warning(
+                    f'GLOBAL STUCK! moved={moved:.2f}m in {GLOBAL_STUCK_TIME}s '
+                    f'state={self.state} → reverse recovery')
+                return
+            self.gstuck_timer = 0.0
+            self.gstuck_gx    = self.gx
+            self.gstuck_gy    = self.gy
+
+        if not hasattr(self, '_prev_state'):
+            self._prev_state = self.state
+        if self.state != self._prev_state:
+            self._reset_gstuck()
+            self._prev_state = self.state
+
+        # ── DRIVE ────────────────────────────────────────────────────────
+        if self.state == S_DRIVE:
+            if self.lane_yaw is None:
+                self.lane_yaw = self.gyaw
+                self.lane_gx  = self.gx
+                self.sweep_dir = -1 if self.gx > 0 else 1
+                self.get_logger().info(
+                    f'sweep={"→-X" if self.sweep_dir==-1 else "→+X"}')
+
+            if self.boundary_grace and abs(self.gy - self.turn_complete_gy) > BOUNDARY_GRACE_DIST:
+                self.boundary_grace = False
+
+            if self._oob() and not self.boundary_grace:
+                self._pub(0, 0, 0)
+                self.brake_timer = 0
+                self.state = S_BRAKE
+                self.get_logger().info(f'Boundary (gx={self.gx:.1f} gy={self.gy:.1f}) → U-turn')
+                return
+
+            if self.obs_front:
+                self._pub(0, 0, 0)
+                self._start_bug2()
+                return
+
+            if self.lane_gx is not None:
+                tgy = self.gy + 5.0*math.sin(self.gyaw)
+                dyaw = math.atan2(tgy-self.gy, self.lane_gx-self.gx)
+                se = self._adiff(dyaw, self.gyaw)
+                self._pub(DRIVE_SPEED, self._clamp(se*DRIVE_LANE_KP, -0.4, 0.4),
+                          self._clamp(se*DRIVE_LANE_KP, -MAX_STEER*0.5, MAX_STEER*0.5))
+            else:
+                self._pub(DRIVE_SPEED, 0, 0)
+
+        # ── BRAKE ────────────────────────────────────────────────────────
+        elif self.state == S_BRAKE:
+            self.brake_timer += dt
+            self._pub(0, 0, 0)
+            if self.brake_timer > 0.4:
+                self.turn_check_timer = 0
+                self.state = S_TURN_CHECK
+
+        # ── TURN_CHECK (determine direction) ─────────────────────────────
+        elif self.state == S_TURN_CHECK:
+            self.turn_check_timer += dt
+            self._pub(0, 0, 0)
+            lok = self.d_left > SIDE_MIN_DIST
+            rok = self.d_right > SIDE_MIN_DIST
+            if lok or rok:
+                if self._heading_is_positive_y():
+                    self._turn_dir = -self.sweep_dir
+                else:
+                    self._turn_dir  = self.sweep_dir
+                self.yaw_start_turn = self.gyaw
+                self._reset_stuck()
+                self.state = S_TURN
+                self.get_logger().info(f'U-turn {"L" if self._turn_dir==1 else "R"} (dL={self.d_left:.1f} dR={self.d_right:.1f})')
+            elif self.turn_check_timer > 5.0:
+                self._pub(-0.15, 0, 0)
+
+        # ── TURN ─────────────────────────────────────────────────────────
+        elif self.state == S_TURN:
+            turned = abs(self._adiff(self.gyaw, self.yaw_start_turn))
+            self.stuck_timer += dt
+            if not self.stuck_done and self.stuck_timer >= STUCK_CHECK_TIME:
+                self.stuck_done = True
+                if math.hypot(self.gx-self.stuck_gx, self.gy-self.stuck_gy) < STUCK_DIST_M:
+                    self.get_logger().warning('STUCK – reverse')
+                    self.rev_yaw_start = self.gyaw
+                    self.rev_dir = -self._turn_dir
+                    self._pub(0, 0, 0)
+                    self.state = S_REVERSE
+                    return
+                
+            if turned < math.pi - 0.10:
+                self._pub(TURN_FORWARD_SPD, TURN_SPEED*self._turn_dir, MAX_STEER*self._turn_dir)
+            else:
+                self._pub(0, 0, 0)
+                self.lane_yaw = self.gyaw
+                self.boundary_grace = True
+                self.turn_complete_gy = self.gy
+                old_gx = self.lane_gx if self.lane_gx is not None else self.gx
+                self.lane_gx = old_gx + self.sweep_dir * LANE_OFFSET
+                self.state = S_DRIVE
+                self.get_logger().info(f'New lane gx={self.lane_gx:.1f} (from {old_gx:.1f})')
+
+        # ── REVERSE ──────────────────────────────────────────────────────
+        elif self.state == S_REVERSE:
+            if abs(self._adiff(self.gyaw, self.rev_yaw_start)) < math.radians(REVERSE_YAW_DEG)-0.08:
+                self._pub(REVERSE_SPEED, TURN_SPEED*self.rev_dir, REVERSE_STEER*self.rev_dir)
+            else:
+                self._pub(0, 0, 0)
+                self.yaw_start_turn = self.gyaw
+                self._reset_stuck()
+                self.state = S_TURN
+
+        # ── BUG2 WALL-FOLLOWING ──────────────────────────────────────────
+        elif self.state == S_BUG2:
+            if self._oob():
+                self._pub(0, 0, 0)
+                self.brake_timer = 0
+                self.state = S_BRAKE
+                self.get_logger().warning(f'Bug2: OUT OF BOUNDS → U-turn')
+                return
+
+            self.bug_timer += dt
+            s  = self.bug_side
+            ds = self.d_right if s == 1 else self.d_left
+            dd = self.d_fright if s == 1 else self.d_fleft
+            df = self.d_front
+
+            if self._bug2_phase == 'turn':
+                turned = abs(self._adiff(self.gyaw, self.bug_start_yaw))
+                if turned < math.radians(50):
+                    self._pub(BUG2_TURN_FWD, BUG2_TURN_ANG * s, MAX_STEER * s)
+                else:
+                    self._bug2_phase = 'straight'
+                    self._bug2_straight_gx = self.gx
+                    self._bug2_straight_gy = self.gy
+                    self._pub(0, 0, 0)
+                    self.get_logger().info(f'Bug2: TURN DONE → FOLLOW')
+
+            elif self._bug2_phase == 'straight':
+                driven = math.hypot(self.gx - self._bug2_straight_gx,
+                                    self.gy - self._bug2_straight_gy)
+                ds = self.d_right if self.bug_side == 1 else self.d_left
+    
+                if driven > 0.5 and ds < 90.0:
+                    e_dist = ds - BUG2_FOLLOW_TARGET
+                    pre_steer = self._clamp(-e_dist * 1.0 * self.bug_side, 
+                                -MAX_STEER * 0.6, MAX_STEER * 0.6)
+                    self._pub(BUG2_FOLLOW_WALL_LIN, pre_steer, pre_steer)
+                else:
+                    self._pub(BUG2_FOLLOW_WALL_LIN, 0, 0)
+    
+                if driven >= 0.75:
+                    self._bug2_phase = 'align'
+                    self.get_logger().info(
+                    f'Bug2: STRAIGHT DONE {driven:.1f}m ds={ds:.2f} → aligning')
+
+            elif self._bug2_phase == 'align':
+                e_dist = ds - BUG2_FOLLOW_TARGET
+                
+                if e_dist < -0.05:
+                    frac = self._clamp((ds - 1.40) / (1.65 - 1.40), 0.0, 1.0)
+                    target_deg = 120.0 - frac * 30.0
+                    target_yaw = math.radians(target_deg) if s == 1 else math.radians(-target_deg)
+                    yaw_err = self._adiff(target_yaw, self.gyaw)
+                    gain = 1.0 + frac * 1.5
+                    steer_cmd = self._clamp(yaw_err * gain, -MAX_STEER * 0.7, MAX_STEER * 0.7)
+                    self._pub(BUG2_FOLLOW_WALL_LIN, steer_cmd, steer_cmd)
+                
+                elif abs(e_dist) <= 0.05:
+                    target_yaw = math.radians(90) if s == 1 else math.radians(-90)
+                    yaw_err = self._adiff(target_yaw, self.gyaw)
+                    steer_cmd = self._clamp(yaw_err * 1.5, -MAX_STEER * 0.6, MAX_STEER * 0.6)
+                    speed = 0.3 if abs(yaw_err) > math.radians(10) else BUG2_FOLLOW_WALL_LIN
+                    self._pub(speed, steer_cmd, steer_cmd)
+                
+                else:
+                    steer_cmd = self._clamp(-e_dist * 0.5 * s, -MAX_STEER * 0.3, MAX_STEER * 0.3)
+                    self._pub(BUG2_FOLLOW_WALL_LIN, steer_cmd, steer_cmd)
+                
+                target_yaw_done = math.radians(90) if s == 1 else math.radians(-90)
+                yaw_ok = abs(self._adiff(self.gyaw, target_yaw_done)) < math.radians(5)
+                if abs(e_dist) <= 0.05 and yaw_ok:
+                    self._pub(0, 0, 0)
+                    self._bug2_phase = 'follow'
+                    self.get_logger().info(f'Bug2: ALIGNED → FOLLOW')
+            
+            elif self._bug2_phase == 'follow':
+                e_dist = ds - BUG2_FOLLOW_TARGET
+                
+                if ds > 2.5 or dd > 4.0:
+                    self._pub(0, 0, 0)
+                    self.state = S_RETURN
+                    self.get_logger().info(
+                        f'Bug2: WALL END ds={ds:.2f}m dd={dd:.2f}m '
+                        f'R={self.d_right:.1f}m L={self.d_left:.1f}m '
+                        f'→ RETURN to M-Line g=({self.gx:.1f},{self.gy:.1f})')
+                else:
+                    steer_cmd = self._clamp(-e_dist * 0.5 * s, -MAX_STEER * 0.3, MAX_STEER * 0.3)
+                    self._pub(BUG2_FOLLOW_WALL_LIN, steer_cmd, steer_cmd)
+
+            if self._log_t == 0.0:
+                turned = abs(self._adiff(self.gyaw, self.bug_start_yaw))
+                if self._bug2_phase == 'turn':
+                    self.get_logger().info(
+                        f'Bug2: TURN F={df:.1f}m FL={self.d_fleft:.1f}m FR={self.d_fright:.1f}m '
+                        f'L={self.d_left:.1f}m R={self.d_right:.1f}m B={self.d_back:.1f}m '
+                        f'ds={ds:.2f} dd={dd:.2f} '
+                        f'yaw={math.degrees(self.gyaw):.1f}° '
+                        f'| STATE=TURN BAT={self.bat_pct:.1f}% '
+                        f'gx={self.gx:.1f} gy={self.gy:.1f}')
+                elif self._bug2_phase == 'straight':
+                    self.get_logger().info(
+                        f'Bug2: STRAIGHT ds={ds:.2f} dd={dd:.2f} df={df:.1f} '
+                        f'F={self.d_front:.1f}m FL={self.d_fleft:.1f}m FR={self.d_fright:.1f}m '
+                        f'L={self.d_left:.1f}m R={self.d_right:.1f}m B={self.d_back:.1f}m '
+                        f'yaw={math.degrees(self.gyaw):.1f}° '
+                        f'| STATE=STRAIGHT BAT={self.bat_pct:.1f}% '
+                        f'gx={self.gx:.1f} gy={self.gy:.1f}')
+                elif self._bug2_phase == 'align':
+                    e_dist = ds - BUG2_FOLLOW_TARGET
+                    self.get_logger().info(
+                        f'Bug2: ALIGN ds={ds:.2f} e_dist={e_dist:+.2f} '
+                        f'F={self.d_front:.1f}m FL={self.d_fleft:.1f}m FR={self.d_fright:.1f}m '
+                        f'L={self.d_left:.1f}m R={self.d_right:.1f}m B={self.d_back:.1f}m '
+                        f'yaw={math.degrees(self.gyaw):.1f}° '
+                        f'| STATE=ALIGN BAT={self.bat_pct:.1f}% '
+                        f'gx={self.gx:.1f} gy={self.gy:.1f}')
+                elif self._bug2_phase == 'follow':
+                    e_dist = ds - BUG2_FOLLOW_TARGET
+                    self.get_logger().info(
+                        f'Bug2: FOLLOW ds={ds:.2f} e_dist={e_dist:+.2f} '
+                        f'F={self.d_front:.1f}m FL={self.d_fleft:.1f}m FR={self.d_fright:.1f}m '
+                        f'L={self.d_left:.1f}m R={self.d_right:.1f}m B={self.d_back:.1f}m '
+                        f'yaw={math.degrees(self.gyaw):.1f}° '
+                        f'| STATE=FOLLOW BAT={self.bat_pct:.1f}% '
+                        f'gx={self.gx:.1f} gy={self.gy:.1f}')
+
+        # ── BUG2 RETURN ──────────────────────────────────────────────────
+        elif self.state == S_RETURN:
+            if self._oob():
+                self._pub(0, 0, 0)
+                self.brake_timer = 0
+                self.state = S_BRAKE
+                self.get_logger().warning(f'Bug2 RETURN: OUT OF BOUNDS → U-turn')
+                return
+
+            if self.obs_front:
+                self.bug_timer = 0
+                self.bug_start_yaw = self.gyaw
+                self._bug2_phase = 'turn'
+                self._reset_stuck()
+                if self.d_left > self.d_right + 1.0:
+                    self.bug_side = 1
+                elif self.d_right > self.d_left + 1.0:
+                    self.bug_side = -1
+                self.state = S_BUG2
+                side = 'L' if self.bug_side == 1 else 'R'
+                self.get_logger().info(
+                    f'Bug2 RETURN: Front obstacle {self.d_front:.1f}m → BUG2 side={side} '
+                    f'(keeping M-Line gx={self.hit_gx:.1f})')
+                return
+
+            dtm = abs(self.gx - self.hit_gx)
+            tgy = self.gy + BUG2_RETURN_LOOKAHEAD
+            dyaw = math.atan2(tgy-self.gy, self.hit_gx-self.gx)
+            se = self._adiff(dyaw, self.gyaw)
+            he = abs(math.degrees(self._adiff(math.pi/2, self.gyaw)))
+
+            if dtm < BUG2_LINE_TOL:
+                self._pub(0, 0, 0)
+                nxt = S_GO_HOME if self.going_home else S_DRIVE
+                self.lane_gx = self.pre_bug_lane_gx if self.pre_bug_lane_gx is not None else self.gx
+                self.get_logger().info(f'Bug2 RETURN: M-Line reached ({dtm:.2f}m) gx={self.gx:.1f} → {nxt}')
+                self.state = nxt
+                return
+
+            c = self._clamp(se*BUG2_RETURN_KP, -0.5, 0.5)
+            st = self._clamp(se*BUG2_RETURN_KP, -MAX_STEER, MAX_STEER)
+            self._pub(BUG2_RETURN_SPEED, c, st)
+
+            if self._log_t == 0.0:
+                self.get_logger().info(
+                    f'Bug2 RET: mline={dtm:.2f}m se={math.degrees(se):.1f}° he={he:.1f}° '
+                    f'g=({self.gx:.1f},{self.gy:.1f}) yaw={math.degrees(self.gyaw):.1f}°')
+
+        # ── GO HOME ──────────────────────────────────────────────────
+        elif self.state == S_GO_HOME:
+            dist = math.hypot(self.gx - self.spawn_gx, self.gy - self.spawn_gy)
+            dx = self.spawn_gx - self.gx
+            dy = self.spawn_gy - self.gy
+
+            if self.obs_front and self.home_phase == 'drive_to_entry':
+                self._pub(0, 0, 0)
+                self._start_bug2()
+                return
+
+            # ── Phase 1: Drive toward entry point near spawn
+            if self.home_phase == 'drive_to_entry':
+                entry_x = self.spawn_gx
+                entry_y = self.spawn_gy + 2.0
+                edx = entry_x - self.gx
+                edy = entry_y - self.gy
+                entry_dist = math.hypot(edx, edy)
+
+                if entry_dist < 2.0:
+                    self._pub(0, 0, 0)
+                    self.home_phase = 'uturn'
+                    self.home_uturn_yaw = self.gyaw
+                    self.home_uturn_dir = 1 if self.d_left > self.d_right else -1
+                    self.get_logger().info(
+                        f'GO_HOME: entry reached → uturn dir={"L" if self.home_uturn_dir==1 else "R"}')
+                else:
+                    target_yaw = math.atan2(edy, edx)
+                    se = self._adiff(target_yaw, self.gyaw)
+                    if abs(se) > math.radians(100):
+                        self._pub(0, 0, 0)
+                        self.home_phase = 'uturn_entry'
+                        self.home_uturn_yaw = self.gyaw
+                        self.home_uturn_dir = 1 if self.d_left > self.d_right else -1
+                        self.get_logger().info(
+                            f'GO_HOME: facing wrong way → uturn_entry '
+                            f'dir={"L" if self.home_uturn_dir==1 else "R"} '
+                            f'dL={self.d_left:.1f} dR={self.d_right:.1f}')
+                    else:
+                        c = self._clamp(se * HOME_KP, -0.4, 0.4)
+                        self._pub(HOME_SPEED, c,
+                                  self._clamp(se * HOME_KP, -MAX_STEER, MAX_STEER))
+
+            # ── Phase 1b: U-turn to face entry point
+            elif self.home_phase == 'uturn_entry':
+                turned = abs(self._adiff(self.gyaw, self.home_uturn_yaw))
+                if turned < math.pi - 0.15:
+                    d = self.home_uturn_dir
+                    self._pub(TURN_FORWARD_SPD, TURN_SPEED * d, MAX_STEER * d)
+                else:
+                    self._pub(0, 0, 0)
+                    self.home_phase = 'drive_to_entry'
+                    self.get_logger().info(
+                        f'GO_HOME: uturn_entry done yaw={math.degrees(self.gyaw):.1f}° → drive_to_entry')
+
+            # ── Phase 2: 180° U-turn (same as S_TURN)
+            elif self.home_phase == 'uturn':
+                turned = abs(self._adiff(self.gyaw, self.home_uturn_yaw))
+                if turned < math.pi - 0.15:
+                    d = self.home_uturn_dir
+                    self._pub(TURN_FORWARD_SPD, TURN_SPEED * d, MAX_STEER * d)
+                else:
+                    self._pub(0, 0, 0)
+                    self.home_phase = 'align_reverse'
+                    self.get_logger().info(
+                        f'GO_HOME: uturn done yaw={math.degrees(self.gyaw):.1f}° → reverse_in')
+                    
+            # ── Phase 2b: Align to spawn_gyaw before reversing
+            elif self.home_phase == 'align_reverse':
+                se = self._adiff(self.spawn_gyaw, self.gyaw)
+                if abs(se) > math.radians(6):
+                    d = 1 if se > 0 else -1
+                    self._pub(TURN_FORWARD_SPD * 0.4, TURN_SPEED * 0.3 * d, MAX_STEER * d)
+                else:
+                    self._pub(0, 0, 0)
+                    self.home_phase = 'reverse_in'
+                    self.get_logger().info(
+                        f'GO_HOME: aligned yaw={math.degrees(self.gyaw):.1f}° → reverse_in')
+
+            # ── Phase 3: Reverse into dock
+            elif self.home_phase == 'reverse_in':
+                if dist < 0.3:
+                    self._pub(0, 0, 0)
+                    self.state = S_CHARGE
+                    self.get_logger().info(
+                        f'CHARGING – docked at station BAT={self.bat_pct:.1f}% '
+                        f'yaw={math.degrees(self.gyaw):.1f}°')
+                else:
+                    se = self._adiff(self.spawn_gyaw, self.gyaw)
+                    c = self._clamp(-se * HOME_KP, -0.3, 0.3)
+                    self._pub(-HOME_SPEED * 0.6, c,
+                              self._clamp(-se * HOME_KP, -MAX_STEER, MAX_STEER))
+                    
+            if self._log_t == 0.0:
+                self.get_logger().info(
+                    f'GO_HOME[{self.home_phase}]: dx={dx:.1f} dy={dy:.1f} '
+                    f'dist={dist:.1f}m BAT={self.bat_pct:.1f}% '
+                    f'g=({self.gx:.1f},{self.gy:.1f}) '
+                    f'F={self.d_front:.1f} yaw={math.degrees(self.gyaw):.1f}°')
+                
+        # ── CHARGING ─────────────────────────────────────────────────
+        elif self.state == S_CHARGE:
+            self._pub(0, 0, 0)
+            self.bat_pct = min(100.0, self.bat_pct + CHARGE_RATE_PCT * dt)
+            if self._log_t == 0.0:
+                self.get_logger().info(
+                    f'CHARGING: BAT={self.bat_pct:.1f}%')
+            if self.bat_pct >= 100.0:
+                self.bat_pct = 100.0
+                self.going_home = False
+                self.state = S_DRIVE
+                self.lane_yaw = self.spawn_gyaw
+                self.lane_gx  = self.spawn_gx
+                self.get_logger().info(
+                    f'FULLY CHARGED – resuming DRIVE')
+                
+        # ── DONE ─────────────────────────────────────────────────────────
+        elif self.state in (S_DONE, S_EMERGENCY):
+            self._pub(0, 0, 0)
+
+    # ── Bug2 start helper ────────────────────────────────────────────────
+    def _start_bug2(self):
+        self.bug_timer     = 0
+        self.hit_gx        = self.gx
+        self.bug_start_yaw = self.gyaw
+        self._reset_stuck()
+        if self.going_home:
+            dyaw = math.atan2(self.spawn_gy - self.gy, self.spawn_gx - self.gx)
+            home_se = self._adiff(dyaw, self.gyaw)
+            home_pref = 1 if home_se >= 0 else -1
+            if self.d_left > self.d_right + 1.0:
+                self.bug_side = 1
+            elif self.d_right > self.d_left + 1.0:
+                self.bug_side = -1
+            else:
+                self.bug_side = home_pref
+        else:
+            room_right = X_MAX - self.gx
+            room_left  = self.gx - X_MIN
+            room_up    = Y_MAX - self.gy
+            room_down  = self.gy - Y_MIN
+            if min(room_left, room_right, room_up, room_down) < 3.0:
+                cy, sy = math.cos(self.gyaw), math.sin(self.gyaw)
+                space_left  = max(0, ( cy) * (room_left if cy > 0 else room_right)
+                                    +( sy) * (room_down if sy > 0 else room_up))
+                space_right = max(0, (-cy) * (room_right if cy > 0 else room_left)
+                                    +(-sy) * (room_up if sy > 0 else room_down))
+                self.bug_side = 1 if space_left >= space_right else -1
+            else:
+                self.bug_side = self.avoid_side
+        self.pre_bug_lane_gx = self.lane_gx
+        self._bug2_phase = 'turn'
+        self.state = S_BUG2
+        side = 'L' if self.bug_side == 1 else 'R'
+        self.get_logger().info(f'Bug2: START obs={self.d_front:.1f}m side={side} g=({self.gx:.1f},{self.gy:.1f})')
 
 def main():
     rclpy.init()
@@ -911,10 +922,9 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
-        node._publish(0.0, 0.0, 0.0)
+        node._pub(0, 0, 0)
         node.destroy_node()
         rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()

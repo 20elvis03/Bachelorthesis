@@ -14,7 +14,6 @@ install(DIRECTORY
 )
 
 install(PROGRAMS
-  scripts/autonomous.py
   scripts/autonomousbug.py
   scripts/manually.py
   DESTINATION lib/${PROJECT_NAME}
