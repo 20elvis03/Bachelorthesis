@@ -86,7 +86,7 @@ YIELD_FACING_DEG      = 120.0 # heading difference to consider "facing each othe
 YIELD_TIMEOUT         = 15.0 # max yield time before fallback to Bug2 (s)
 
 # ── Go Home (low battery) ───────────────────────────────────────────────────
-BAT_LOW_PCT           = 40.0 # start heading home (%)
+BAT_LOW_PCT           = 80.0 # start heading home (%)
 HOME_SPEED            = 0.6
 HOME_KP               = 2.0
 CHARGE_RATE_PCT       = 1.0 # battery % gained per second while charging
