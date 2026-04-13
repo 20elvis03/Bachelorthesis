@@ -134,7 +134,7 @@ class AutoDrive(Node):
         self.create_subscription(
             Float64, 'emergency_reset', self._emergency_reset_cb, 10)
         
-        # Global pose (authoritative)
+        # Global pose
         self.gx         = 0.0
         self.gy         = 0.0
         self.gyaw       = 0.0
@@ -335,7 +335,6 @@ class AutoDrive(Node):
             angle_to = math.atan2(dy, dx)
             if abs(self._adiff(angle_to, self.gyaw)) > cone:
                 continue
-            # Check if they are roughly facing us (heading difference ~180°)
             heading_diff = abs(self._adiff(self.gyaw, ryaw))
             if heading_diff > facing_thresh:
                 return name
@@ -477,9 +476,7 @@ class AutoDrive(Node):
     def _loop(self, dt):
         if not self.pose_ready:
             return
-        # Broadcast own pose for multi-robot coordination
         self._publish_coordination()
-        # Wait after spawn before driving
         if not hasattr(self, '_startup_waited'):
             self._startup_waited = 0.0
         if self._startup_waited < 3.0:
@@ -518,11 +515,10 @@ class AutoDrive(Node):
 
         if self.bat_pct < BAT_LOW_PCT and self.state not in (S_GO_HOME, S_DONE, S_CHARGE):
             if self.going_home:
-                pass  # already heading home, let current state (Bug2/Turn/Brake) finish
+                pass
             else:
                 self.going_home = True
                 self.home_phase = 'nav_to_lane'
-                # Save pre-home lane to return to after charging
                 self.pre_home_lane_gx = self.lane_gx
                 self.pre_home_lane_yaw = self.lane_yaw
                 self.pre_home_sweep_dir = self.sweep_dir
@@ -547,7 +543,6 @@ class AutoDrive(Node):
         if self.obs_stop and self.state not in (S_TURN, S_TURN_CHECK, S_REVERSE, S_CHARGE, S_YIELD):
             other = self._robot_in_front()
             if other and self._should_yield(other):
-                # Lower priority → yield (stop and wait)
                 self._pub(0, 0, 0)
                 if self.state != S_YIELD:
                     self.yield_to = other
@@ -558,10 +553,8 @@ class AutoDrive(Node):
                         f'[{self.robot_name}] YIELD to {other} (E-STOP, priority)')
                 return
             if other and not self._should_yield(other):
-                # Higher priority → skip E-STOP, let Bug2/state handle it
                 pass
             else:
-                # Not a robot → normal E-STOP
                 self._pub(0, 0, 0)
                 self.get_logger().warning(
                     f'E-STOP FRONT {self.d_front:.2f}m', throttle_duration_sec=1.0)
@@ -760,7 +753,6 @@ class AutoDrive(Node):
             if self._oob():
                 self._pub(0, 0, 0)
                 if self.going_home:
-                    # OOB during GO_HOME → abort Bug2, go back to GO_HOME nav
                     self.home_phase = 'nav_to_lane'
                     self.state = S_GO_HOME
                     self.get_logger().warning(
@@ -789,7 +781,6 @@ class AutoDrive(Node):
                     self.get_logger().info(f'Bug2: TURN DONE → FOLLOW')
 
             elif self._bug2_phase == 'straight':
-                # If obstacle disappeared (e.g. another robot moved away), abort Bug2
                 ds_check = self.d_right if self.bug_side == 1 else self.d_left
                 if not self.obs_front and ds_check > 5.0 and self.d_front > 5.0:
                     self._pub(0, 0, 0)
@@ -805,17 +796,17 @@ class AutoDrive(Node):
                 ds = self.d_right if self.bug_side == 1 else self.d_left
                 roughly_parallel = abs(self._adiff(self.gyaw, self.bug_start_yaw)) < math.radians(25)
 
-                # Phase 1: geradeaus fahren um Ecke zu räumen
+                # Phase 1
                 if driven < 1.5:
                     self._pub(BUG2_FOLLOW_WALL_LIN, 0, 0)
 
-                # Phase 2: hart zur Wand einlenken
+                # Phase 2
                 elif not roughly_parallel or ds > BUG2_FOLLOW_TARGET + 0.3:
                     self._pub(BUG2_FOLLOW_WALL_LIN * 0.5,
                               -BUG2_TURN_ANG * 0.6 * self.bug_side,
                               -MAX_STEER * 0.5 * self.bug_side)
 
-                # Phase 3: nah UND parallel → FOLLOW
+                # Phase 3
                 else:
                     self._bug2_phase = 'follow'
                     self.get_logger().info(
@@ -893,15 +884,11 @@ class AutoDrive(Node):
                     f'g=({self.gx:.1f},{self.gy:.1f}) yaw={math.degrees(self.gyaw):.1f}°')
 
         # ── GO HOME ──────────────────────────────────────────────────
-        # Strategy: forward-only, drive straight onto the charging pad.
-        #   1) nav_to_lane   – drive south to garage entry, then align X
-        #   2) drive_to_pad  – drive south straight onto the pad
         elif self.state == S_GO_HOME:
             dist = math.hypot(self.gx - self.spawn_gx, self.gy - self.spawn_gy)
             dx = self.spawn_gx - self.gx
             dy = self.spawn_gy - self.gy
 
-            # Obstacle handling during navigation phases
             if self.obs_front and self.home_phase in ('nav_to_lane', 'uturn_entry', 'drive_to_pad'):
                 other = self._robot_in_front()
                 if other and self._should_yield(other):
@@ -983,7 +970,6 @@ class AutoDrive(Node):
                     self.get_logger().info(
                         f'GO_HOME: on pad at ({self.gx:.1f},{self.gy:.1f}) → CHARGE')
                 elif pad_dist < 3.0 and abs(dx_pad) < 0.8:
-                    # Close & X-aligned: final straight south approach
                     south_yaw = -math.pi / 2
                     x_err = pad_x - self.gx
                     heading_err = self._adiff(south_yaw, self.gyaw)
@@ -995,11 +981,9 @@ class AutoDrive(Node):
                               self._clamp(heading_err * HOME_KP + lateral_correction, -0.4, 0.4),
                               steer)
                 else:
-                    # Far away or not aligned: steer directly toward pad
                     target_yaw = math.atan2(dy_pad, dx_pad)
                     se = self._adiff(target_yaw, self.gyaw)
                     if abs(se) > math.radians(120):
-                        # Facing completely wrong → U-turn
                         self._pub(0, 0, 0)
                         self.home_phase = 'uturn_entry'
                         self.home_uturn_yaw = self.gyaw
@@ -1064,8 +1048,6 @@ class AutoDrive(Node):
         elif self.state == S_YIELD:
             self._pub(0, 0, 0)
             self.yield_timer += dt
-
-            # Check if the robot we're yielding to has passed
             cleared = False
             if self.yield_to in self.other_robots:
                 rx, ry, _ = self.other_robots[self.yield_to]
@@ -1084,7 +1066,6 @@ class AutoDrive(Node):
                 self.state = nxt
                 self.yield_to = None
             elif self.yield_timer >= YIELD_TIMEOUT:
-                # Timeout: fall back to Bug2 to get around
                 self.get_logger().warning(
                     f'[{self.robot_name}] YIELD timeout {YIELD_TIMEOUT}s → Bug2')
                 self.yield_to = None
