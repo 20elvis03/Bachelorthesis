@@ -1,4 +1,4 @@
-import os, re, tempfile
+import os
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, GroupAction, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -9,12 +9,12 @@ from ament_index_python.packages import get_package_share_directory
 
 # ── Robot configurations ─────────────────────────────────────────────────────
 ROBOTS = [
-    {"name": "robot_1", "x": 22.5, "y": -22.5, "z": 0.15, "yaw": 1.5708,
-     "spawn_gx": 21.0, "spawn_gy": -29.1, "spawn_yaw_deg": 90.0},
+    {"name": "robot_1", "x": 5.0, "y": -22.5, "z": 0.15, "yaw": 1.5708,
+     "spawn_gx": 22.5, "spawn_gy": -28.2, "spawn_yaw_deg": 90.0},
     {"name": "robot_2", "x": 2.5, "y": -22.5, "z": 0.15, "yaw": 1.5708,
-     "spawn_gx": 15.0, "spawn_gy": -29.1, "spawn_yaw_deg": 90.0},
+     "spawn_gx": 17.5, "spawn_gy": -28.2, "spawn_yaw_deg": 90.0},
     {"name": "robot_3", "x": -22.5, "y": -22.5, "z": 0.15, "yaw": 1.5708,
-     "spawn_gx": 9.0, "spawn_gy": -29.1, "spawn_yaw_deg": 90.0},
+     "spawn_gx": 12.5, "spawn_gy": -28.2, "spawn_yaw_deg": 90.0},
 ]
 
 GZ_TOPICS_TO_REMAP = [
@@ -32,9 +32,58 @@ GZ_TOPICS_TO_REMAP = [
     "/camera/back/floor",
 ]
 
+# ── Per-robot bridge topics ──────────────────────────────────────────────────
+BRIDGE_TOPICS = [
+    # Driving & odometry
+    ("cmd_vel",        "geometry_msgs/msg/Twist",        "gz.msgs.Twist",              ">"),
+    ("steering",       "std_msgs/msg/Float64",           "gz.msgs.Double",             ">"),
+    ("odom",           "nav_msgs/msg/Odometry",          "gz.msgs.Odometry",           "<"),
+
+    # TF & joints
+    ("tf",             "tf2_msgs/msg/TFMessage",         "gz.msgs.Pose_V",             "<"),
+    ("joint_states",   "sensor_msgs/msg/JointState",     "gz.msgs.Model",              "<"),
+
+    # LiDAR
+    ("scan",           "sensor_msgs/msg/LaserScan",      "gz.msgs.LaserScan",          "<"),
+    ("scan/points",    "sensor_msgs/msg/PointCloud2",    "gz.msgs.PointCloudPacked",   "<"),
+
+    # ── Cameras ────────────────────────────────────────────────────────────────
+
+    # Front camera
+    ("camera/front/image",       "sensor_msgs/msg/Image",      "gz.msgs.Image",       "<"),
+    ("camera/front/depth_image", "sensor_msgs/msg/Image",      "gz.msgs.Image",       "<"),
+    ("camera/front/camera_info", "sensor_msgs/msg/CameraInfo", "gz.msgs.CameraInfo",  "<"),
+
+    # Front floor camera
+    ("camera/front/floor/image",       "sensor_msgs/msg/Image",      "gz.msgs.Image",       "<"),
+    ("camera/front/floor/depth_image", "sensor_msgs/msg/Image",      "gz.msgs.Image",       "<"),
+    ("camera/front/floor/camera_info", "sensor_msgs/msg/CameraInfo", "gz.msgs.CameraInfo",  "<"),
+
+    # Left camera
+    ("camera/left/image",       "sensor_msgs/msg/Image",      "gz.msgs.Image",       "<"),
+    ("camera/left/depth_image", "sensor_msgs/msg/Image",      "gz.msgs.Image",       "<"),
+    ("camera/left/camera_info", "sensor_msgs/msg/CameraInfo", "gz.msgs.CameraInfo",  "<"),
+
+    # Right camera
+    ("camera/right/image",       "sensor_msgs/msg/Image",      "gz.msgs.Image",       "<"),
+    ("camera/right/depth_image", "sensor_msgs/msg/Image",      "gz.msgs.Image",       "<"),
+    ("camera/right/camera_info", "sensor_msgs/msg/CameraInfo", "gz.msgs.CameraInfo",  "<"),
+
+    # Back camera
+    ("camera/back/image",       "sensor_msgs/msg/Image",      "gz.msgs.Image",       "<"),
+    ("camera/back/depth_image", "sensor_msgs/msg/Image",      "gz.msgs.Image",       "<"),
+    ("camera/back/camera_info", "sensor_msgs/msg/CameraInfo", "gz.msgs.CameraInfo",  "<"),
+
+    # Back floor camera
+    ("camera/back/floor/image",       "sensor_msgs/msg/Image",      "gz.msgs.Image",       "<"),
+    ("camera/back/floor/depth_image", "sensor_msgs/msg/Image",      "gz.msgs.Image",       "<"),
+    ("camera/back/floor/camera_info", "sensor_msgs/msg/CameraInfo", "gz.msgs.CameraInfo",  "<"),
+]
+
 
 def _namespace_urdf(urdf: str, ns: str) -> str:
     """Replace absolute Gazebo topic names in URDF with namespaced versions."""
+    import re
     result = urdf
     for topic in GZ_TOPICS_TO_REMAP:
         result = result.replace(
@@ -59,18 +108,7 @@ def _namespace_urdf(urdf: str, ns: str) -> str:
     return result
 
 
-def _make_robot_bridge_yaml(template: str, ns: str) -> str:
-    """Write a namespaced copy of the per-robot bridge YAML to a temp file."""
-    content = template.replace("{ns}", ns)
-    tmp = tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yaml", prefix=f"bridge_{ns}_", delete=False)
-    tmp.write(content)
-    tmp.close()
-    return tmp.name
-
-
-def make_robot_group(robot: dict, urdf_template: str,
-                     bridge_template: str) -> GroupAction:
+def make_robot_group(robot: dict, urdf_template: str) -> GroupAction:
     ns = robot["name"]
     urdf = _namespace_urdf(urdf_template, ns)
 
@@ -101,18 +139,21 @@ def make_robot_group(robot: dict, urdf_template: str,
         ],
     )
 
-    # ── Bridge via YAML config (lazy works reliably with config_file) ────
-    bridge_yaml = _make_robot_bridge_yaml(bridge_template, ns)
+    bridge_args = []
+    for ros_suffix, ros_type, gz_type, direction in BRIDGE_TOPICS:
+        ros_topic = f"/{ns}/{ros_suffix}"
+        if direction == ">":
+            bridge_args.append(f"{ros_topic}@{ros_type}@{gz_type}")
+        else:
+            bridge_args.append(f"{ros_topic}@{ros_type}[{gz_type}")
+
     bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge",
         name=f"bridge_{ns}",
         output="screen",
-        parameters=[{
-            "config_file": bridge_yaml,
-            "use_sim_time": True,
-            "lazy": True,
-        }],
+        arguments=bridge_args,
+        parameters=[{"use_sim_time": True, "lazy": True}],
     )
 
     auto_drive = Node(
@@ -147,11 +188,6 @@ def generate_launch_description():
     with open(urdf_path, "r") as f:
         urdf_template = f.read()
 
-    bridge_per_robot_path = os.path.join(
-        pkg_share, "config", "bridge_per_robot_without_camera.yaml")
-    with open(bridge_per_robot_path, "r") as f:
-        bridge_template = f.read()
-
     world_file = os.path.join(pkg_share, "worlds", "airport_terminal_world.sdf")
     gz_sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
@@ -166,7 +202,7 @@ def generate_launch_description():
     GZ_STARTUP_DELAY = 15.0
 
     shared_bridge_yaml = os.path.join(
-        pkg_share, "config", "bridge_multi_shared_without_camera.yaml")
+        pkg_share, "config", "bridge_multi_shared.yaml")
     shared_bridge = TimerAction(
         period=GZ_STARTUP_DELAY - 2.0,
         actions=[Node(
@@ -186,7 +222,7 @@ def generate_launch_description():
     for i, robot in enumerate(ROBOTS):
         delayed = TimerAction(
             period=GZ_STARTUP_DELAY + i * 5,
-            actions=[make_robot_group(robot, urdf_template, bridge_template)],
+            actions=[make_robot_group(robot, urdf_template)],
         )
         robot_groups.append(delayed)
 
