@@ -1,0 +1,138 @@
+# Shared world-level bridge for multi-robot setup.
+# These topics are global (not per-robot).
+
+# ── SYSTEM ─────────────────────────────────────────────────────
+
+- ros_topic_name: "/clock"
+  gz_topic_name: "/clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "gz.msgs.Clock"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/world/pose_info"
+  gz_topic_name: "/world/airport_terminal_world/dynamic_pose/info"
+  ros_type_name: "tf2_msgs/msg/TFMessage"
+  gz_type_name: "gz.msgs.Pose_V"
+  direction: GZ_TO_ROS
+
+# ── SURVEILLANCE CAMERAS ──────────────────────────────────────
+
+# Garage
+- ros_topic_name: "/surveillance/garage"
+  gz_topic_name: "/surveillance/garage"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/garage/camera_info"
+  gz_topic_name: "/surveillance/garage/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# NW
+- ros_topic_name: "/surveillance/nw"
+  gz_topic_name: "/surveillance/nw"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/nw/camera_info"
+  gz_topic_name: "/surveillance/nw/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# NE
+- ros_topic_name: "/surveillance/ne"
+  gz_topic_name: "/surveillance/ne"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/ne/camera_info"
+  gz_topic_name: "/surveillance/ne/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# SW
+- ros_topic_name: "/surveillance/sw"
+  gz_topic_name: "/surveillance/sw"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/sw/camera_info"
+  gz_topic_name: "/surveillance/sw/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# SE
+- ros_topic_name: "/surveillance/se"
+  gz_topic_name: "/surveillance/se"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/se/camera_info"
+  gz_topic_name: "/surveillance/se/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# Center – Down
+- ros_topic_name: "/surveillance/center/down"
+  gz_topic_name: "/surveillance/center/down"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/center/down/camera_info"
+  gz_topic_name: "/surveillance/center/down/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# Center – North
+- ros_topic_name: "/surveillance/center/north"
+  gz_topic_name: "/surveillance/center/north"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/center/north/camera_info"
+  gz_topic_name: "/surveillance/center/north/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# Center – South
+- ros_topic_name: "/surveillance/center/south"
+  gz_topic_name: "/surveillance/center/south"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/center/south/camera_info"
+  gz_topic_name: "/surveillance/center/south/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# Center – East
+- ros_topic_name: "/surveillance/center/east"
+  gz_topic_name: "/surveillance/center/east"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/center/east/camera_info"
+  gz_topic_name: "/surveillance/center/east/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# Center – West
+- ros_topic_name: "/surveillance/center/west"
+  gz_topic_name: "/surveillance/center/west"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/surveillance/center/west/camera_info"
+  gz_topic_name: "/surveillance/center/west/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS

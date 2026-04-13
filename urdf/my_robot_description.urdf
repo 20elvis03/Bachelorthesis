@@ -519,7 +519,7 @@
             <samples>32</samples>
             <resolution>1.0</resolution>
             <min_angle>-1.0</min_angle>
-            <max_angle>0.15</max_angle>
+            <max_angle>0.0</max_angle>
           </vertical>
         </scan>
         <range>
@@ -544,16 +544,16 @@
   <gazebo reference="camera_front">
     <sensor name="camera_front" type="rgbd_camera">
       <topic>/camera/front</topic>
-      <update_rate>30.0</update_rate>
+      <update_rate>20.0</update_rate>
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>
-          <width>1920</width>
-          <height>1080</height>
+          <width>1280</width>
+          <height>720</height>
         </image>
         <clip><near>0.3</near><far>70.0</far></clip>
       </camera>
-      <always_on>true</always_on>
+      <always_on>false</always_on>
       <visualize>false</visualize>
     </sensor>
   </gazebo>
@@ -564,16 +564,16 @@
   <gazebo reference="camera_front_floor">
     <sensor name="camera_front_floor" type="rgbd_camera">
       <topic>/camera/front/floor</topic>
-      <update_rate>30.0</update_rate>
+      <update_rate>20.0</update_rate>
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>
-          <width>1920</width>
-          <height>1080</height>
+          <width>1280</width>
+          <height>720</height>
         </image>
         <clip><near>0.3</near><far>70.0</far></clip>
       </camera>
-      <always_on>true</always_on>
+      <always_on>false</always_on>
       <visualize>false</visualize>
     </sensor>
   </gazebo>
@@ -584,16 +584,16 @@
   <gazebo reference="camera_left">
     <sensor name="camera_left" type="rgbd_camera">
       <topic>/camera/left</topic>
-      <update_rate>30.0</update_rate>
+      <update_rate>20.0</update_rate>
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>
-          <width>1920</width>
-          <height>1080</height>
+          <width>1280</width>
+          <height>720</height>
         </image>
         <clip><near>0.3</near><far>70.0</far></clip>
       </camera>
-      <always_on>true</always_on>
+      <always_on>false</always_on>
       <visualize>false</visualize>
     </sensor>
   </gazebo>
@@ -605,16 +605,16 @@
   <gazebo reference="camera_right">
     <sensor name="camera_right" type="rgbd_camera">
       <topic>/camera/right</topic>
-      <update_rate>30.0</update_rate>
+      <update_rate>20.0</update_rate>
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>
-          <width>1920</width>
-          <height>1080</height>
+          <width>1280</width>
+          <height>720</height>
         </image>
         <clip><near>0.3</near><far>70.0</far></clip>
       </camera>
-      <always_on>true</always_on>
+      <always_on>false</always_on>
       <visualize>false</visualize>
     </sensor>
   </gazebo>
@@ -625,16 +625,16 @@
   <gazebo reference="camera_back">
     <sensor name="camera_back" type="rgbd_camera">
       <topic>/camera/back</topic>
-      <update_rate>30.0</update_rate>
+      <update_rate>20.0</update_rate>
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>
-          <width>1920</width>
-          <height>1080</height>
+          <width>1280</width>
+          <height>720</height>
         </image>
         <clip><near>0.3</near><far>70.0</far></clip>
       </camera>
-      <always_on>true</always_on>
+      <always_on>false</always_on>
       <visualize>false</visualize>
     </sensor>
   </gazebo>
@@ -646,16 +646,16 @@
   <gazebo reference="camera_back_floor">
     <sensor name="camera_back_floor" type="rgbd_camera">
       <topic>/camera/back/floor</topic>
-      <update_rate>30.0</update_rate>
+      <update_rate>20.0</update_rate>
       <camera>
         <horizontal_fov>1.047</horizontal_fov>
         <image>
-          <width>1920</width>
-          <height>1080</height>
+          <width>1280</width>
+          <height>720</height>
         </image>
         <clip><near>0.3</near><far>70.0</far></clip>
       </camera>
-      <always_on>true</always_on>
+      <always_on>false</always_on>
       <visualize>false</visualize>
     </sensor>
   </gazebo>

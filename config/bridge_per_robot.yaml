@@ -1,0 +1,125 @@
+# ══════════════════════════════════════════════════════════════════════════
+#  Per-robot bridge template.
+#  {ns} is replaced at launch time with the robot namespace.
+#
+#  All topics are listed here. The bridge runs with lazy: true, so Gazebo
+#  sensors only render when a ROS node actually subscribes (e.g. rqt).
+# ══════════════════════════════════════════════════════════════════════════
+
+# ── DRIVING & ODOMETRY ────────────────────────────────────────────────────
+
+- ros_topic_name: "/{ns}/cmd_vel"
+  gz_topic_name: "/{ns}/cmd_vel"
+  ros_type_name: "geometry_msgs/msg/Twist"
+  gz_type_name: "gz.msgs.Twist"
+  direction: ROS_TO_GZ
+
+- ros_topic_name: "/{ns}/steering"
+  gz_topic_name: "/{ns}/steering"
+  ros_type_name: "std_msgs/msg/Float64"
+  gz_type_name: "gz.msgs.Double"
+  direction: ROS_TO_GZ
+
+- ros_topic_name: "/{ns}/odom"
+  gz_topic_name: "/{ns}/odom"
+  ros_type_name: "nav_msgs/msg/Odometry"
+  gz_type_name: "gz.msgs.Odometry"
+  direction: GZ_TO_ROS
+
+# ── TF & JOINTS ──────────────────────────────────────────────────────────
+
+- ros_topic_name: "/{ns}/tf"
+  gz_topic_name: "/{ns}/tf"
+  ros_type_name: "tf2_msgs/msg/TFMessage"
+  gz_type_name: "gz.msgs.Pose_V"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/{ns}/joint_states"
+  gz_topic_name: "/{ns}/joint_states"
+  ros_type_name: "sensor_msgs/msg/JointState"
+  gz_type_name: "gz.msgs.Model"
+  direction: GZ_TO_ROS
+
+# ── LIDAR ─────────────────────────────────────────────────────────────────
+
+- ros_topic_name: "/{ns}/scan"
+  gz_topic_name: "/{ns}/scan"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "gz.msgs.LaserScan"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/{ns}/scan/points"
+  gz_topic_name: "/{ns}/scan/points"
+  ros_type_name: "sensor_msgs/msg/PointCloud2"
+  gz_type_name: "gz.msgs.PointCloudPacked"
+  direction: GZ_TO_ROS
+
+# ── CAMERAS ───────────────────────────────────────────────────────────────
+
+# Front
+- ros_topic_name: "/{ns}/camera/front/image"
+  gz_topic_name: "/{ns}/camera/front/image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/{ns}/camera/front/depth_image"
+  gz_topic_name: "/{ns}/camera/front/depth_image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/{ns}/camera/front/camera_info"
+  gz_topic_name: "/{ns}/camera/front/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# Left
+- ros_topic_name: "/{ns}/camera/left/image"
+  gz_topic_name: "/{ns}/camera/left/image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/{ns}/camera/left/depth_image"
+  gz_topic_name: "/{ns}/camera/left/depth_image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/{ns}/camera/left/camera_info"
+  gz_topic_name: "/{ns}/camera/left/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# Right
+- ros_topic_name: "/{ns}/camera/right/image"
+  gz_topic_name: "/{ns}/camera/right/image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/{ns}/camera/right/depth_image"
+  gz_topic_name: "/{ns}/camera/right/depth_image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/{ns}/camera/right/camera_info"
+  gz_topic_name: "/{ns}/camera/right/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# Back
+- ros_topic_name: "/{ns}/camera/back/image"
+  gz_topic_name: "/{ns}/camera/back/image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/{ns}/camera/back/depth_image"
+  gz_topic_name: "/{ns}/camera/back/depth_image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+- ros_topic_name: "/{ns}/camera/back/camera_info"
+  gz_topic_name: "/{ns}/camera/back/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS

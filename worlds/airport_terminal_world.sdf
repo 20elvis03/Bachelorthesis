@@ -78,6 +78,156 @@
       </link>
     </model>
 
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!--  GATE FLOOR MARKINGS (queue lines for passengers)           -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+
+    <!-- Gate A1 (X=-15) -->
+    <model name="gate_a1_queue_line1">
+      <static>true</static>
+      <pose>-15.0 14.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>4.0 0.05 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+    <model name="gate_a1_queue_line2">
+      <static>true</static>
+      <pose>-15.0 13.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>4.0 0.05 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+    <model name="gate_a1_queue_line3">
+      <static>true</static>
+      <pose>-15.0 12.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>4.0 0.05 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+    <model name="gate_a1_queue_side_l">
+      <static>true</static>
+      <pose>-17.0 13.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>0.05 2.0 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+    <model name="gate_a1_queue_side_r">
+      <static>true</static>
+      <pose>-13.0 13.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>0.05 2.0 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+
+    <!-- Gate A2 (X=-5) -->
+    <model name="gate_a2_queue_line1">
+      <static>true</static>
+      <pose>-5.0 14.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>4.0 0.05 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+    <model name="gate_a2_queue_line2">
+      <static>true</static>
+      <pose>-5.0 13.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>4.0 0.05 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+    <model name="gate_a2_queue_line3">
+      <static>true</static>
+      <pose>-5.0 12.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>4.0 0.05 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+    <model name="gate_a2_queue_side_l">
+      <static>true</static>
+      <pose>-7.0 13.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>0.05 2.0 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+    <model name="gate_a2_queue_side_r">
+      <static>true</static>
+      <pose>-3.0 13.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>0.05 2.0 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+
+    <!-- Gate A3 (X=5) -->
+    <model name="gate_a3_queue_line1">
+      <static>true</static>
+      <pose>5.0 14.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>4.0 0.05 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+    <model name="gate_a3_queue_line2">
+      <static>true</static>
+      <pose>5.0 13.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>4.0 0.05 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+    <model name="gate_a3_queue_line3">
+      <static>true</static>
+      <pose>5.0 12.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>4.0 0.05 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+    <model name="gate_a3_queue_side_l">
+      <static>true</static>
+      <pose>3.0 13.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>0.05 2.0 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+    <model name="gate_a3_queue_side_r">
+      <static>true</static>
+      <pose>7.0 13.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>0.05 2.0 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+
+    <!-- Gate A4 (X=15) -->
+    <model name="gate_a4_queue_line1">
+      <static>true</static>
+      <pose>15.0 14.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>4.0 0.05 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+    <model name="gate_a4_queue_line2">
+      <static>true</static>
+      <pose>15.0 13.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>4.0 0.05 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+    <model name="gate_a4_queue_line3">
+      <static>true</static>
+      <pose>15.0 12.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>4.0 0.05 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+    <model name="gate_a4_queue_side_l">
+      <static>true</static>
+      <pose>13.0 13.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>0.05 2.0 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+    <model name="gate_a4_queue_side_r">
+      <static>true</static>
+      <pose>17.0 13.0 0.06 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>0.05 2.0 0.01</size></box></geometry>
+        <material><ambient>0.95 0.85 0.1 1.0</ambient><diffuse>0.95 0.85 0.1 1.0</diffuse></material></visual></link>
+    </model>
+
+    <model name="boundary_line">
+      <static>true</static>
+      <pose>0 16.0 0.06 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry>
+            <box>
+              <size>49.7 0.05 0.1</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.95 0.85 0.1 1.0</ambient>
+            <diffuse>0.95 0.85 0.1 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
     <model name="vtile_0_0">
       <static>true</static>
       <pose>-22.5 -22.5 0.05 0 0 0</pose>
@@ -2108,19 +2258,19 @@
 
     <model name="wall_south_w">
       <static>true</static>
-      <pose>-7.4 -25.0 2.25 0 0 0</pose>
+      <pose>-10.0 -25.0 2.25 0 0 0</pose>
       <link name="link">
         <collision name="col">
           <geometry>
             <box>
-              <size>35.1 0.3 4.5</size>
+              <size>30.1 0.3 4.5</size>
             </box>
           </geometry>
         </collision>
         <visual name="vis">
           <geometry>
             <box>
-              <size>35.1 0.3 4.5</size>
+              <size>30.1 0.3 4.5</size>
             </box>
           </geometry>
           <material>
@@ -2630,6 +2780,91 @@
               <length>0.04</length>
             </cylinder>
           </geometry>
+          <material>
+            <ambient>0.95 0.95 0.95 1.0</ambient>
+            <diffuse>0.95 0.95 0.95 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!--  TOILET ROOM                                                -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <model name="toilet_room_wall_east">
+      <static>true</static>
+      <pose>35.0 -7.0 2.25 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>0.3 15.0 4.5</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.3 15.0 4.5</size></box></geometry>
+          <material>
+            <ambient>0.85 0.85 0.82 1.0</ambient>
+            <diffuse>0.85 0.85 0.82 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="toilet_room_wall_south">
+      <static>true</static>
+      <pose>30.0 -14.5 2.25 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>10.0 0.3 4.5</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>10.0 0.3 4.5</size></box></geometry>
+          <material>
+            <ambient>0.85 0.85 0.82 1.0</ambient>
+            <diffuse>0.85 0.85 0.82 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="toilet_room_wall_north">
+      <static>true</static>
+      <pose>30.0 0.5 2.25 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>10.0 0.3 4.5</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>10.0 0.3 4.5</size></box></geometry>
+          <material>
+            <ambient>0.85 0.85 0.82 1.0</ambient>
+            <diffuse>0.85 0.85 0.82 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="toilet_room_floor">
+      <static>true</static>
+      <pose>30.0 -7.0 0.01 0 0 0</pose>
+      <link name="link">
+        <collision name="col">
+          <geometry><box><size>10.0 15.0 0.02</size></box></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>10.0 15.0 0.02</size></box></geometry>
+          <material>
+            <ambient>0.9 0.9 0.88 1.0</ambient>
+            <diffuse>0.9 0.9 0.88 1.0</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="toilet_room_ceiling">
+      <static>true</static>
+      <pose>30.0 -7.0 4.5 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>10.0 15.0 0.05</size></box></geometry>
           <material>
             <ambient>0.95 0.95 0.95 1.0</ambient>
             <diffuse>0.95 0.95 0.95 1.0</diffuse>
@@ -4799,7 +5034,7 @@
 
     <model name="display_2_frame">
       <static>true</static>
-      <pose>-8.0 -24.85 2.2 0 0 0</pose>
+      <pose>-10.0 -24.85 2.2 0 0 0</pose>
       <link name="link">
         <collision name="col">
           <geometry>
@@ -4824,7 +5059,7 @@
 
     <model name="display_2_screen">
       <static>true</static>
-      <pose>-8.0 -24.78 2.2 0 0 0</pose>
+      <pose>-10.0 -24.78 2.2 0 0 0</pose>
       <link name="link">
         <visual name="vis">
           <geometry>
@@ -4843,7 +5078,7 @@
 
     <model name="display_3_frame">
       <static>true</static>
-      <pose>3.0 -24.85 2.2 0 0 0</pose>
+      <pose>-1.0 -24.85 2.2 0 0 0</pose>
       <link name="link">
         <collision name="col">
           <geometry>
@@ -4868,7 +5103,7 @@
 
     <model name="display_3_screen">
       <static>true</static>
-      <pose>3.0 -24.78 2.2 0 0 0</pose>
+      <pose>-1.0 -24.78 2.2 0 0 0</pose>
       <link name="link">
         <visual name="vis">
           <geometry>
@@ -4890,7 +5125,7 @@
     <!-- ═══════════════════════════════════════════════════════════ -->
     <model name="charging_station_1">
       <static>true</static>
-      <pose>22.5 -30.0 0.5 0 0 0</pose>
+      <pose>21.0 -30.0 0.5 0 0 0</pose>
       <link name="link">
         <visual name="vis">
           <geometry>
@@ -4908,7 +5143,7 @@
 
     <model name="charge_pad_1">
       <static>true</static>
-      <pose>22.5 -29.2 0.051 0 0 0</pose>
+      <pose>21.0 -29.2 0.051 0 0 0</pose>
       <link name="link">
         <visual name="vis">
           <geometry>
@@ -4926,7 +5161,7 @@
 
     <model name="charging_station_2">
       <static>true</static>
-      <pose>17.5 -30.0 0.5 0 0 0</pose>
+      <pose>15.0 -30.0 0.5 0 0 0</pose>
       <link name="link">
         <visual name="vis">
           <geometry>
@@ -4944,7 +5179,7 @@
 
     <model name="charge_pad_2">
       <static>true</static>
-      <pose>17.5 -29.2 0.051 0 0 0</pose>
+      <pose>15.0 -29.2 0.051 0 0 0</pose>
       <link name="link">
         <visual name="vis">
           <geometry>
@@ -4962,7 +5197,7 @@
 
     <model name="charging_station_3">
       <static>true</static>
-      <pose>12.5 -30.0 0.5 0 0 0</pose>
+      <pose>9.0 -30.0 0.5 0 0 0</pose>
       <link name="link">
         <visual name="vis">
           <geometry>
@@ -4980,7 +5215,7 @@
 
     <model name="charge_pad_3">
       <static>true</static>
-      <pose>12.5 -29.2 0.051 0 0 0</pose>
+      <pose>9.0 -29.2 0.051 0 0 0</pose>
       <link name="link">
         <visual name="vis">
           <geometry>
@@ -5023,7 +5258,7 @@
 
     <model name="garage_wall_west">
       <static>true</static>
-      <pose>10.0 -30.0 2.25 0 0 0</pose>
+      <pose>5.0 -30.0 2.25 0 0 0</pose>
       <link name="link">
         <collision name="col">
           <geometry>
@@ -5048,19 +5283,19 @@
 
     <model name="garage_wall_south">
       <static>true</static>
-      <pose>17.5 -35.15 2.25 0 0 0</pose>
+      <pose>15.0 -35.15 2.25 0 0 0</pose>
       <link name="link">
         <collision name="col">
           <geometry>
             <box>
-              <size>15.0 0.3 4.5</size>
+              <size>20.0 0.3 4.5</size>
             </box>
           </geometry>
         </collision>
         <visual name="vis">
           <geometry>
             <box>
-              <size>15.0 0.3 4.5</size>
+              <size>20.0 0.3 4.5</size>
             </box>
           </geometry>
           <material>
@@ -5073,12 +5308,12 @@
 
     <model name="garage_floor">
       <static>true</static>
-      <pose>17.5 -30.0 0.049 0 0 0</pose>
+      <pose>15.0 -30.0 0.049 0 0 0</pose>
       <link name="link">
         <visual name="vis">
           <geometry>
             <box>
-              <size>15.0 10.25 0.1</size>
+              <size>20.0 10.25 0.1</size>
             </box>
           </geometry>
           <material>
@@ -5091,19 +5326,19 @@
 
     <model name="garage_roof">
       <static>true</static>
-      <pose>17.4 -30.0 4.55 0 0 0</pose>
+      <pose>15.0 -30.0 4.55 0 0 0</pose>
       <link name="link">
         <collision name="col">
           <geometry>
             <box>
-              <size>15.1 10.3 0.2</size>
+              <size>20.1 10.3 0.2</size>
             </box>
           </geometry>
         </collision>
         <visual name="vis">
           <geometry>
             <box>
-              <size>15.1 10.3 0.2</size>
+              <size>20.1 10.3 0.2</size>
             </box>
           </geometry>
           <material>
@@ -5116,19 +5351,19 @@
 
     <model name="garage_door_frame_t">
       <static>true</static>
-      <pose>17.5 -25.15 4.35 0 0 0</pose>
+      <pose>15.0 -25.15 4.35 0 0 0</pose>
       <link name="link">
         <collision name="col">
           <geometry>
             <box>
-              <size>15.0 0.3 0.3</size>
+              <size>20.0 0.3 0.3</size>
             </box>
           </geometry>
         </collision>
         <visual name="vis">
           <geometry>
             <box>
-              <size>15.0 0.3 0.3</size>
+              <size>20.0 0.3 0.3</size>
             </box>
           </geometry>
           <material>
@@ -5141,7 +5376,7 @@
 
     <model name="garage_lamp_strip">
       <static>true</static>
-      <pose>17.5 -28.0 4.42 0 0 0</pose>
+      <pose>15.0 -28.0 4.42 0 0 0</pose>
       <link name="link">
         <visual name="strip">
           <geometry>
@@ -5171,7 +5406,7 @@
     </model>
 
     <light name="garage_lamp_light" type="point">
-      <pose>17.65 -28.0 4.1 0 0 0</pose>
+      <pose>15.15 -28.0 4.1 0 0 0</pose>
       <cast_shadows>false</cast_shadows>
       <diffuse>0.85 0.83 0.78 1.0</diffuse>
       <specular>0.03 0.03 0.03 1.0</specular>
@@ -5188,7 +5423,7 @@
     <!-- ═══════════════════════════════════════════════════════════ -->
     <model name="camera_garage_mount">
       <static>true</static>
-      <pose>17.5 -34.5 4.3 0 0 0</pose>
+      <pose>15.0 -34.5 4.3 0 0 0</pose>
       <link name="link">
         <visual name="vis">
           <geometry>
@@ -5206,7 +5441,7 @@
 
     <model name="camera_garage_body">
       <static>true</static>
-      <pose>17.5 -34.5 4.15 0 0 0</pose>
+      <pose>15.0 -34.5 4.15 0 0 0</pose>
       <link name="link">
         <visual name="vis">
           <geometry>
@@ -5227,15 +5462,15 @@
           <camera>
             <horizontal_fov>1.3</horizontal_fov>
             <image>
-              <width>1920.0</width>
-              <height>1080.0</height>
+              <width>1280.0</width>
+              <height>720.0</height>
             </image>
             <clip>
               <near>0.1</near>
               <far>70.0</far>
             </clip>
           </camera>
-          <always_on>true</always_on>
+          <always_on>false</always_on>
           <visualize>false</visualize>
         </sensor>
       </link>
@@ -5285,15 +5520,15 @@
           <camera>
             <horizontal_fov>1.9199</horizontal_fov>
             <image>
-              <width>1920.0</width>
-              <height>1080.0</height>
+              <width>1280.0</width>
+              <height>720.0</height>
             </image>
             <clip>
               <near>0.1</near>
               <far>70.0</far>
             </clip>
           </camera>
-          <always_on>true</always_on>
+          <always_on>false</always_on>
           <visualize>false</visualize>
         </sensor>
       </link>
@@ -5343,15 +5578,15 @@
           <camera>
             <horizontal_fov>1.9199</horizontal_fov>
             <image>
-              <width>1920.0</width>
-              <height>1080.0</height>
+              <width>1280.0</width>
+              <height>720.0</height>
             </image>
             <clip>
               <near>0.1</near>
               <far>70.0</far>
             </clip>
           </camera>
-          <always_on>true</always_on>
+          <always_on>false</always_on>
           <visualize>false</visualize>
         </sensor>
       </link>
@@ -5401,15 +5636,15 @@
           <camera>
             <horizontal_fov>1.9199</horizontal_fov>
             <image>
-              <width>1920.0</width>
-              <height>1080.0</height>
+              <width>1280.0</width>
+              <height>720.0</height>
             </image>
             <clip>
               <near>0.1</near>
               <far>70.0</far>
             </clip>
           </camera>
-          <always_on>true</always_on>
+          <always_on>false</always_on>
           <visualize>false</visualize>
         </sensor>
       </link>
@@ -5459,15 +5694,15 @@
           <camera>
             <horizontal_fov>1.9199</horizontal_fov>
             <image>
-              <width>1920.0</width>
-              <height>1080.0</height>
+              <width>1280.0</width>
+              <height>720.0</height>
             </image>
             <clip>
               <near>0.1</near>
               <far>70.0</far>
             </clip>
           </camera>
-          <always_on>true</always_on>
+          <always_on>false</always_on>
           <visualize>false</visualize>
         </sensor>
       </link>
@@ -5524,15 +5759,15 @@
           <camera>
             <horizontal_fov>1.5708</horizontal_fov>
             <image>
-              <width>1920.0</width>
-              <height>1080.0</height>
+              <width>1280.0</width>
+              <height>720.0</height>
             </image>
             <clip>
               <near>0.1</near>
               <far>70.0</far>
             </clip>
           </camera>
-          <always_on>true</always_on>
+          <always_on>false</always_on>
           <visualize>false</visualize>
         </sensor>
         <sensor name="camera_center_north" type="camera">
@@ -5542,15 +5777,15 @@
           <camera>
             <horizontal_fov>1.7708</horizontal_fov>
             <image>
-              <width>1920.0</width>
-              <height>1080.0</height>
+              <width>1280.0</width>
+              <height>720.0</height>
             </image>
             <clip>
               <near>0.1</near>
               <far>70.0</far>
             </clip>
           </camera>
-          <always_on>true</always_on>
+          <always_on>false</always_on>
           <visualize>false</visualize>
         </sensor>
         <sensor name="camera_center_south" type="camera">
@@ -5560,15 +5795,15 @@
           <camera>
             <horizontal_fov>1.7708</horizontal_fov>
             <image>
-              <width>1920.0</width>
-              <height>1080.0</height>
+              <width>1280.0</width>
+              <height>720.0</height>
             </image>
             <clip>
               <near>0.1</near>
               <far>70.0</far>
             </clip>
           </camera>
-          <always_on>true</always_on>
+          <always_on>false</always_on>
           <visualize>false</visualize>
         </sensor>
         <sensor name="camera_center_east" type="camera">
@@ -5578,15 +5813,15 @@
           <camera>
             <horizontal_fov>1.7708</horizontal_fov>
             <image>
-              <width>1920.0</width>
-              <height>1080.0</height>
+              <width>1280.0</width>
+              <height>720.0</height>
             </image>
             <clip>
               <near>0.1</near>
               <far>70.0</far>
             </clip>
           </camera>
-          <always_on>true</always_on>
+          <always_on>false</always_on>
           <visualize>false</visualize>
         </sensor>
         <sensor name="camera_center_west" type="camera">
@@ -5596,15 +5831,15 @@
           <camera>
             <horizontal_fov>1.7708</horizontal_fov>
             <image>
-              <width>1920.0</width>
-              <height>1080.0</height>
+              <width>1280.0</width>
+              <height>720.0</height>
             </image>
             <clip>
               <near>0.1</near>
               <far>70.0</far>
             </clip>
           </camera>
-          <always_on>true</always_on>
+          <always_on>false</always_on>
           <visualize>false</visualize>
         </sensor>
       </link>
