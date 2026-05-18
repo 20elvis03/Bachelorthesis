@@ -8,6 +8,8 @@ from launch.substitutions import PathJoinSubstitution
 from ament_index_python.packages import get_package_share_directory
 
 # ── Robot configurations ─────────────────────────────────────────────────────
+#robots will return to the global spawn_gx/y coordinate and start from there so they all drive a different pattern
+#even if the normal spawn coordinates x/y are different 
 ROBOTS = [
     {"name": "robot_1", "x": 22.5, "y": -22.5, "z": 0.15, "yaw": 1.5708,
      "spawn_gx": 21.0, "spawn_gy": -29.1, "spawn_yaw_deg": 90.0},
@@ -148,7 +150,7 @@ def generate_launch_description():
         urdf_template = f.read()
 
     bridge_per_robot_path = os.path.join(
-        pkg_share, "config", "bridge_per_robot_without_camera.yaml")
+        pkg_share, "config", "bridge_per_robot_without_camera.yaml") # change to birdge_per_robot for robots with cameras and bridge_per_robot_without_camera for robots without cameras (better performance)
     with open(bridge_per_robot_path, "r") as f:
         bridge_template = f.read()
 
@@ -166,7 +168,7 @@ def generate_launch_description():
     GZ_STARTUP_DELAY = 15.0
 
     shared_bridge_yaml = os.path.join(
-        pkg_share, "config", "bridge_multi_shared_without_camera.yaml")
+        pkg_share, "config", "bridge_multi_shared_without_camera.yaml") # change to bridge_multi_shared for surveillance cameras and bridge_multi_shared_without_camera for no surveillance cameras (better performance)
     shared_bridge = TimerAction(
         period=GZ_STARTUP_DELAY - 2.0,
         actions=[Node(
