@@ -1106,30 +1106,38 @@ class AutoDrive(Node):
         self.hit_gx        = self.gx
         self.bug_start_yaw = self.gyaw
         self._reset_stuck()
-        if self.going_home:
+
+        room_right = X_MAX - self.gx
+        room_left  = self.gx - X_MIN
+        room_up    = Y_MAX - self.gy
+        room_down  = self.gy - Y_MIN
+        near_boundary = min(room_left, room_right, room_up, room_down) < 3.0
+
+        boundary_side = None
+        if near_boundary:
+            cy, sy = math.cos(self.gyaw), math.sin(self.gyaw)
+            left_vec_x, left_vec_y   = -sy,  cy
+            right_vec_x, right_vec_y =  sy, -cy
+            space_left  = (room_right if left_vec_x  > 0 else room_left) * abs(left_vec_x) \
+                        + (room_up    if left_vec_y  > 0 else room_down) * abs(left_vec_y)
+            space_right = (room_right if right_vec_x > 0 else room_left) * abs(right_vec_x) \
+                        + (room_up    if right_vec_y > 0 else room_down) * abs(right_vec_y)
+            if space_left > space_right + 2.0:
+                boundary_side = 1
+            elif space_right > space_left + 2.0:
+                boundary_side = -1
+
+        if boundary_side is not None:
+            self.bug_side = boundary_side
+        elif self.going_home:
             dyaw = math.atan2(self.spawn_gy - self.gy, self.spawn_gx - self.gx)
-            home_se = self._adiff(dyaw, self.gyaw)
-            home_pref = 1 if home_se >= 0 else -1
-            if self.d_left > self.d_right + 1.0:
-                self.bug_side = 1
-            elif self.d_right > self.d_left + 1.0:
-                self.bug_side = -1
-            else:
-                self.bug_side = home_pref
+            home_pref = 1 if self._adiff(dyaw, self.gyaw) >= 0 else -1
+            if self.d_left  > self.d_right + 1.0: self.bug_side = 1
+            elif self.d_right > self.d_left + 1.0: self.bug_side = -1
+            else: self.bug_side = home_pref
         else:
-            room_right = X_MAX - self.gx
-            room_left  = self.gx - X_MIN
-            room_up    = Y_MAX - self.gy
-            room_down  = self.gy - Y_MIN
-            if min(room_left, room_right, room_up, room_down) < 3.0:
-                cy, sy = math.cos(self.gyaw), math.sin(self.gyaw)
-                space_left  = max(0, ( cy) * (room_left if cy > 0 else room_right)
-                                    +( sy) * (room_down if sy > 0 else room_up))
-                space_right = max(0, (-cy) * (room_right if cy > 0 else room_left)
-                                    +(-sy) * (room_up if sy > 0 else room_down))
-                self.bug_side = 1 if space_left >= space_right else -1
-            else:
-                self.bug_side = self.avoid_side
+            self.bug_side = self.avoid_side
+
         self.pre_bug_lane_gx = self.lane_gx
         self._bug2_phase = 'turn'
         self.state = S_BUG2

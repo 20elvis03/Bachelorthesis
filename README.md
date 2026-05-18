@@ -1,3 +1,5 @@
+# Flughafenterminal Multi-Roboter Autonomes Reinigungssystem
+
 ## Voraussetzungen
 
 - ROS 2 Kilted
@@ -5,8 +7,6 @@
 - (bei Nutzung von WSL 2.0+ Ubuntu 24.04)
 - `ros_gz_sim`, `ros_gz_bridge`
 - `tf_transformations` Python-Paket
-  
-# Flughafenterminal Multi-Roboter Autonomes Reinigungssystem
 
 Eine ROS 2 Kilted / Gazebo Ionic Simulation von drei autonomen Reinigungsrobotern in einer detaillierten Flughafenterminal Umgebung. Die Roboter navigieren mittels eines Bug2-basierten Hindernisvermeidungsalgorithmus, koordinieren sich untereinander zur Kollisionsvermeidung und kehren bei niedrigem Akkustand selbstständig zu ihren Ladestationen zurück.
 
