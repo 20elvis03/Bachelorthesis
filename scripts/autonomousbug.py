@@ -86,10 +86,10 @@ YIELD_FACING_DEG      = 120.0 # heading difference to consider "facing each othe
 YIELD_TIMEOUT         = 15.0 # max yield time before fallback to Bug2 (s)
 
 # ── Go Home (low battery) ───────────────────────────────────────────────────
-BAT_LOW_PCT           = 80.0 # start heading home (%)
+BAT_LOW_PCT           = 20.0 # start heading home (%)
 HOME_SPEED            = 0.6
 HOME_KP               = 2.0
-CHARGE_RATE_PCT       = 1.0 # battery % gained per second while charging
+CHARGE_RATE_PCT       = 0.2 # battery % gained per second while charging
 
 # ── States ───────────────────────────────────────────────────────────────────
 S_DRIVE      = 'DRIVE'
@@ -498,7 +498,7 @@ class AutoDrive(Node):
         else:
             d = math.hypot(self.gx - self.bat_gx, self.gy - self.bat_gy)
             if d > 0.05 and self.state != S_CHARGE:
-                self.bat_pct -= d * 0.5
+                self.bat_pct -= d * 0.2
                 self.bat_gx   = self.gx
                 self.bat_gy   = self.gy
 
