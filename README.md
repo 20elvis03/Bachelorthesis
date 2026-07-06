@@ -18,7 +18,7 @@ Die Simulation wurde auf den folgenden Systemen entwickelt und getestet:
 
 | Komponente | Setup 1 (High-End) | Setup 2 | Setup 3 – HP EliteDesk 800 G5 (Minimal) |
 |------------|--------------------|---------|------------------------------------------|
-| CPU | Intel Core i7-13700KF | AMD Ryzen 5 3600 | Intel Core i5-9500 (6 Kerne, bis 4,4 GHz) |
+| CPU | Intel Core i7-13700KF | AMD Ryzen 5 3600 | Intel Core i5-9500 |
 | RAM | 32 GB DDR5 | 16 GB DDR4 | 8 GB DDR4 |
 | GPU | NVIDIA GeForce RTX 4090 (24 GB VRAM) | NVIDIA GeForce RTX 2070 SUPER (8 GB VRAM) | Intel UHD Graphics 630 (integriert) |
 | Betriebssystem | Windows 10 + WSL 2 (Ubuntu 24.04) | Windows 11 + WSL 2 (Ubuntu 24.04) | Windows 11 + WSL 2 (Ubuntu 24.04) |
