@@ -4,11 +4,27 @@ Eine ROS 2 Kilted / Gazebo Ionic Simulation von drei autonomen Reinigungsroboter
 
 ## Voraussetzungen
 
+### Software
+
 - ROS 2 Kilted
 - Gazebo Ionic
 - (bei Nutzung von WSL 2.0+ Ubuntu 24.04)
 - `ros_gz_sim`, `ros_gz_bridge`
 - `tf_transformations` Python-Paket
+
+### Getestete Hardware
+
+Die Simulation wurde auf den folgenden Systemen entwickelt und getestet:
+
+| Komponente | Setup 1 (High-End) | Setup 2 | Setup 3 – HP EliteDesk 800 G5 (Minimal) |
+|------------|--------------------|---------|------------------------------------------|
+| CPU | Intel Core i7-13700KF | AMD Ryzen 5 3600 | Intel Core i5-9500 (6 Kerne, bis 4,4 GHz) |
+| RAM | 32 GB DDR5 | 16 GB DDR4 | 8 GB DDR4 |
+| GPU | NVIDIA GeForce RTX 4090 (24 GB VRAM) | NVIDIA GeForce RTX 2070 SUPER (8 GB VRAM) | Intel UHD Graphics 630 (integriert) |
+| Betriebssystem | Windows 10 + WSL 2 (Ubuntu 24.04) | Windows 11 + WSL 2 (Ubuntu 24.04) | Windows 11 + WSL 2 (Ubuntu 24.04) |
+| Performance | Sehr gute Performance | Eher niedrige Performance | nicht lauffähig |
+
+> **Hinweis:** Eine dedizierte NVIDIA-GPU wird empfohlen, da GPU-LiDAR und die sechs RGBD-Kameras stark GPU-abhängig sind. Auf Setup 3 (nur integrierte Intel-Grafik) sollten die kameralosen Bridge-Konfigurationen (`bridge_multi_shared_ohne_kamera.yaml`, `bridge_per_robot_ohne_kamera.yaml` siehte weiter unten) verwendet werden, um eine brauchbare Performance (RTF) zu erreichen.
 
 ## Installation
 
