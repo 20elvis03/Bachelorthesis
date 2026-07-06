@@ -24,7 +24,8 @@ Die Simulation wurde auf den folgenden Systemen entwickelt und getestet:
 | Betriebssystem | Windows 10 + WSL 2 (Ubuntu 24.04) | Windows 11 + WSL 2 (Ubuntu 24.04) | Windows 11 + WSL 2 (Ubuntu 24.04) |
 | Performance | Sehr gute Performance | Eher niedrige Performance | nicht lauffähig |
 
-> **Hinweis:** Eine dedizierte NVIDIA-GPU wird empfohlen, da GPU-LiDAR und die sechs RGBD-Kameras stark GPU-abhängig sind. Auf Setup 3 (nur integrierte Intel-Grafik) sollten die kameralosen Bridge-Konfigurationen (`bridge_multi_shared_ohne_kamera.yaml`, `bridge_per_robot_ohne_kamera.yaml` siehte weiter unten) verwendet werden, um eine brauchbare Performance (RTF) zu erreichen.
+> **Hinweis:** Die Simulation ist stark GPU-abhängig (GPU-LiDAR + sechs RGBD-Kameras). Wie die Tests zeigen, führen zu wenig VRAM zu niedriger Performance und eine rein integrierte Grafik zum Absturz. Empfiehlt sich daher ein Rechner mit ≥ 16 GB RAM und einer dedizierten Grafikkarte mit ≥ 12 GB VRAM (z. B. NVIDIA GeForce RTX 3060 12 GB oder besser). Auf schwächeren Systemen bzw. mit integrierter Grafik sollten die kameralosen Bridge-Konfigurationen (`bridge_multi_shared_ohne_kamera.yaml`, `bridge_per_robot_ohne_kamera.yaml`) verwendet werden, um eine brauchbare Performance (RTF) zu erreichen.
+
 
 ## Installation
 
