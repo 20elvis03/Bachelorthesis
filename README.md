@@ -22,7 +22,7 @@ Die Simulation wurde auf den folgenden Systemen entwickelt und getestet:
 | RAM | 32 GB DDR5 | 16 GB DDR4 | 8 GB DDR4 |
 | GPU | NVIDIA GeForce RTX 4090 (24 GB VRAM) | NVIDIA GeForce RTX 2070 SUPER (8 GB VRAM) | Intel UHD Graphics 630 (integriert) |
 | Betriebssystem | Windows 10 + WSL 2 (Ubuntu 24.04) | Windows 11 + WSL 2 (Ubuntu 24.04) | Windows 11 + WSL 2 (Ubuntu 24.04) |
-| Performance | Sehr gute Performance | Eher niedrige Performance | nicht lauffähig |
+| Performance | Sehr gute Performance (99.50% RTP) | Eher niedrige Performance (27.80% RTP) | nicht lauffähig |
 
 > **Hinweis:** Die Simulation ist stark GPU-abhängig (GPU-LiDAR + sechs RGBD-Kameras). Empfohlen wird daher ein Rechner mit ≥ 16 GB RAM und einer dedizierten GPU mit ≥ 12 GB VRAM (z. B. NVIDIA GeForce RTX 3060 12 GB oder besser), auf schwächeren oder integrierten Grafiklösungen sollten die kameralosen Bridge-Konfigurationen (`bridge_multi_shared_ohne_kamera.yaml`, `bridge_per_robot_ohne_kamera.yaml` standardmäßig eingestellt siehe unten) verwendet werden.
 
