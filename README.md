@@ -19,6 +19,7 @@ In PowerShell (als Administrator):
 ```powershell
 wsl --install
 ```
+
 Rechner neu starten
 
 ```powershell
