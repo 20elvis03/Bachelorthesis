@@ -1,5 +1,7 @@
 # Flughafenterminal Multi-Roboter Autonomes Reinigungssystem
 
+Eine ROS 2 Kilted / Gazebo Ionic Simulation von drei autonomen Reinigungsrobotern in einer detaillierten Flughafenterminal Umgebung. Die Roboter navigieren mittels eines Bug2-basierten Hindernisvermeidungsalgorithmus, koordinieren sich untereinander zur Kollisionsvermeidung und kehren bei niedrigem Akkustand selbstständig zu ihren Ladestationen zurück.
+
 ## Voraussetzungen
 
 - ROS 2 Kilted
@@ -8,7 +10,84 @@
 - `ros_gz_sim`, `ros_gz_bridge`
 - `tf_transformations` Python-Paket
 
-Eine ROS 2 Kilted / Gazebo Ionic Simulation von drei autonomen Reinigungsrobotern in einer detaillierten Flughafenterminal Umgebung. Die Roboter navigieren mittels eines Bug2-basierten Hindernisvermeidungsalgorithmus, koordinieren sich untereinander zur Kollisionsvermeidung und kehren bei niedrigem Akkustand selbstständig zu ihren Ladestationen zurück.
+## Installation
+
+### 1. WSL & Ubuntu einrichten (nur unter Windows)
+
+In PowerShell (als Administrator):
+
+```powershell
+wsl --install
+# Rechner neu starten
+wsl --install -d Ubuntu-24.04
+```
+
+Nach der Installation werden ein Benutzername und ein Passwort abgefragt. Anschließend ein Ubuntu-Fenster öffnen.
+
+### 2. System aktualisieren & Grundpakete installieren
+
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y software-properties-common curl
+sudo add-apt-repository universe -y
+```
+
+### 3. ROS 2 Paketquelle hinzufügen
+
+```bash
+export ROS_APT_SOURCE_VERSION=$(curl -s https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest | grep -F '"tag_name"' | awk -F\" '{print $4}')
+curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo $VERSION_CODENAME)_all.deb"
+sudo apt install -y /tmp/ros2-apt-source.deb
+sudo apt update
+```
+
+### 4. ROS 2 Kilted & Projektpakete installieren
+
+```bash
+sudo apt install -y \
+  ros-kilted-desktop \
+  ros-kilted-ros-gz \
+  ros-kilted-ros-gz-sim ros-kilted-ros-gz-bridge \
+  ros-kilted-robot-state-publisher \
+  ros-kilted-joint-state-publisher-gui \
+  ros-kilted-rviz2 ros-kilted-xacro \
+  ros-kilted-tf-transformations \
+  python3-transforms3d \
+  ros-dev-tools python3-colcon-common-extensions
+```
+
+### 5. Workspace anlegen & Repository klonen
+
+```bash
+mkdir -p ~/ros2_kilted/src
+git clone -b main            https://github.com/20elvis03/Bachelorthesis.git ~/ros2_kilted/src/my_robot_description
+git clone -b my_robot_gazebo https://github.com/20elvis03/Bachelorthesis.git ~/ros2_kilted/src/my_robot_gazebo
+```
+
+### 6. Pakete bauen
+
+```bash
+cd ~/ros2_kilted
+source /opt/ros/kilted/setup.bash
+colcon build --packages-select my_robot_description my_robot_gazebo
+```
+
+### 7. Umgebung konfigurieren
+
+Die folgenden Zeilen an `~/.bashrc` anhängen (`$HOME` sorgt dafür, dass es unabhängig vom Benutzernamen funktioniert):
+
+```bash
+cat >> ~/.bashrc <<'EOF'
+
+# --- ROS 2 Kilted + Projekt ---
+source /opt/ros/kilted/setup.bash
+export ROS_DOMAIN_ID=007
+source ~/ros2_kilted/install/local_setup.bash
+export GZ_SIM_RESOURCE_PATH=$HOME/ros2_kilted/install/my_robot_description/share:/opt/ros/kilted/share
+EOF
+
+source ~/.bashrc
+```
 
 ## Projektübersicht
 
