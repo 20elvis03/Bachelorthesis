@@ -12,7 +12,7 @@ Eine ROS 2 Kilted / Gazebo Ionic Simulation von drei autonomen Reinigungsroboter
 
 ## Installation
 
-### 1. WSL & Ubuntu einrichten (nur unter Windows)
+### 1. WSL & Ubuntu einrichten (nur unter Windows 11)
 
 In PowerShell (als Administrator):
 
