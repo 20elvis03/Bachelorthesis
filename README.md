@@ -19,6 +19,9 @@ In PowerShell (als Administrator):
 ```powershell
 wsl --install
 # Rechner neu starten
+```
+
+```powershell
 wsl --install -d Ubuntu-24.04
 ```
 
@@ -78,14 +81,18 @@ Die folgenden Zeilen an `~/.bashrc` anhängen (`$HOME` sorgt dafür, dass es una
 
 ```bash
 cat >> ~/.bashrc <<'EOF'
+```
 
+```bash
 # --- ROS 2 Kilted + Projekt ---
 source /opt/ros/kilted/setup.bash
 export ROS_DOMAIN_ID=007
 source ~/ros2_kilted/install/local_setup.bash
 export GZ_SIM_RESOURCE_PATH=$HOME/ros2_kilted/install/my_robot_description/share:/opt/ros/kilted/share
 EOF
+```
 
+```bash
 source ~/.bashrc
 ```
 
