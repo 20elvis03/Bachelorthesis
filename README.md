@@ -18,8 +18,8 @@ In PowerShell (als Administrator):
 
 ```powershell
 wsl --install
-# Rechner neu starten
 ```
+Rechner neu starten
 
 ```powershell
 wsl --install -d Ubuntu-24.04
