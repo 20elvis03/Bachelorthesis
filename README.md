@@ -16,7 +16,7 @@ Eine ROS 2 Kilted / Gazebo Ionic Simulation von drei autonomen Reinigungsroboter
 
 Die Simulation wurde auf den folgenden Systemen entwickelt und getestet:
 
-| Komponente | Setup 1 (High-End) | Setup 2 | Setup 3 – HP EliteDesk 800 G5 (Minimal) |
+| Komponente | Setup 1 High-End PC | Setup 2 low/mid PC| Setup 3 Mini PCs |
 |------------|--------------------|---------|------------------------------------------|
 | CPU | Intel Core i7-13700KF | AMD Ryzen 5 3600 | Intel Core i5-9500 |
 | RAM | 32 GB DDR5 | 16 GB DDR4 | 8 GB DDR4 |
